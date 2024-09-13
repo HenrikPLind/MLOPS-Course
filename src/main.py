@@ -9,6 +9,8 @@ images = process_images_and_save_as_csv(image_dir="C:/PhD/Courses/MLOPS-Course/1
 check_expectations(csv_file='C:\PhD\Courses\MLOPS-Course\data_quality\image_details.csv', output_file='expectation_trigger_input_data.txt')
 
 # Preprocess images
-
 patches = preprocessing(images)
+
+
+
 print()
