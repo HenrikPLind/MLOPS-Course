@@ -1,12 +1,3 @@
-import pandas as pd
-import numpy as np
-from PIL import Image
-import tifffile as tiff
-import os
-import cv2
-
-
-
 import os
 import pandas as pd
 import cv2
