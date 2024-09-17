@@ -4,7 +4,7 @@ from itertools import product
 from PIL import Image
 from sklearn.model_selection import train_test_split
 
-
+print('change')
 def patchMaking(images, d, e, overlap):
     patches = []
     for image in images:
