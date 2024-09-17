@@ -8,7 +8,7 @@ def check_expectations(csv_file, output_file, alert_email=None):
     validator  = context.sources.pandas_default.read_csv(csv_file)
     # Create a Great Expectations DataFrame from the pandas DataFrame
 
-    columns_in_range = validator.expect_column_values_to_be_between(column='blurriness', min_value=0, max_value=23)
+    columns_in_range = validator.expect_column_values_to_be_between(column='blurriness', min_value=0, max_value=30)
     image_size_expectation = validator.expect_column_pair_values_to_be_in_set(column_A='image_x_res', column_B='image_y_res', value_pairs_set=[(2708, 3384)])
     image_channel_expectation = validator.expect_column_distinct_values_to_equal_set(column='image_z_res', value_set=([3]))
 

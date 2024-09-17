@@ -17,22 +17,42 @@ def process_images_and_save_as_csv(image_dir, csv_filename):
             image_path = os.path.join(image_dir, fname)
             image_paths.append(image_path)
 
-            try:
-                img = tiff.imread(image_path)
-                image_x, image_y, image_z = img.shape
+            if image_path.endswith((".tif")):
 
-                # Apply the Laplacian filter
-                laplacian = cv2.Laplacian(img, cv2.CV_64F)
+                try:
+                    img = tiff.imread(image_path)
+                    image_x, image_y, image_z = img.shape
 
-                # Calculate the variance of the Laplacian
-                variance = laplacian.var()
-                variance_arr.append(variance)
-                image_x_arr.append(image_x)
-                image_y_arr.append(image_y)
-                image_z_arr.append(image_z)
-                input_images.append(img)
-            except Exception as e:
-                print(f"Error opening {image_path}: {e}")
+                    # Apply the Laplacian filter
+                    laplacian = cv2.Laplacian(img, cv2.CV_64F)
+
+                    # Calculate the variance of the Laplacian
+                    variance = laplacian.var()
+                    variance_arr.append(variance)
+                    image_x_arr.append(image_x)
+                    image_y_arr.append(image_y)
+                    image_z_arr.append(image_z)
+                    input_images.append(img)
+                except Exception as e:
+                    print(f"Error opening {image_path}: {e}")
+
+            elif image_path.endswith(".png"):
+                try:
+                    img = cv2.imread(image_path)
+                    image_x, image_y, image_z = img.shape
+
+                    # Apply the Laplacian filter
+                    laplacian = cv2.Laplacian(img, cv2.CV_64F)
+
+                    # Calculate the variance of the Laplacian
+                    variance = laplacian.var()
+                    variance_arr.append(variance)
+                    image_x_arr.append(image_x)
+                    image_y_arr.append(image_y)
+                    image_z_arr.append(image_z)
+                    input_images.append(img)
+                except Exception as e:
+                    print(f"Error opening {image_path}: {e}")
 
     # Create a DataFrame
     df = pd.DataFrame({
