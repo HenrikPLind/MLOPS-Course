@@ -1,8 +1,10 @@
 import numpy as np
 import tifffile as tiff
-from patchify import patchify
 from itertools import product
 from PIL import Image
+from sklearn.model_selection import train_test_split
+
+
 def patchMaking(images, d, e, overlap):
     patches = []
     for image in images:
@@ -26,11 +28,40 @@ def savePatches(patches, path, images, startImgNo):
         patch.save(path + filename[i])
         i = i + 1
 
-def preprocessing(images):
-    patches = patchMaking(images, d=256, e=256, overlap=128)
 
-    savePatches(patches=patches, path='', images=images, startImgNo=0)
+def preprocessing(input_images, label_images,
+                  folder_training, folder_training_label,
+                  folder_validation, folder_validation_label,
+                  folder_testing, folder_testing_label):
+    # Split the data into training and testing sets
+    X_train, X_val, y_train, y_val = train_test_split(input_images, label_images, test_size=0.2, random_state=42)
+    X_val, X_test, y_val, y_test = train_test_split(X_val, y_val,  test_size=0.2, random_state=42)
 
-    return patches
+    '### Create training input and label patches ###'
+    training_patches = patchMaking(X_train, d=256, e=256, overlap=128)
+    training_label_patches = patchMaking(y_train, d=256, e=256, overlap=128)
+
+    '### Create validation input and label patches ###'
+    validation_patches = patchMaking(X_val, d=256, e=256, overlap=128)
+    validation_label_patches = patchMaking(y_val, d=256, e=256, overlap=128)
+
+    '### Create test input and label patches ###'
+    test_patches = patchMaking(X_test, d=256, e=256, overlap=128)
+    test_label_patches = patchMaking(y_test, d=256, e=256, overlap=128)
+
+    '### Save training input and label patches ###'
+    savePatches(patches=training_patches, path=folder_training, images=X_train, startImgNo=0)
+    savePatches(patches=training_label_patches, path=folder_training_label, images=y_train, startImgNo=0)
+
+    '### Save training input and label patches ###'
+    savePatches(patches=validation_patches, path=folder_validation, images=X_val, startImgNo=0)
+    savePatches(patches=validation_label_patches, path=folder_validation_label, images=y_val, startImgNo=0)
+
+    '### Save training input and label patches ###'
+    savePatches(patches=test_patches, path=folder_testing, images=X_test, startImgNo=0)
+    savePatches(patches=test_label_patches, path=folder_testing_label, images=y_test, startImgNo=0)
+
+
+    return training_patches, training_label_patches, validation_patches, validation_label_patches
 
 
