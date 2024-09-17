@@ -16,7 +16,7 @@ import numpy as np
 import cv2
 import tensorflow.keras.backend as K
 import tensorflow as tf
-from models.models import multi_unet_model # uses softmax
+from models.models import multi_unet_model  # uses softmax
 import mlflow
 import mlflow.sklearn
 from sklearn.linear_model import LinearRegression
@@ -27,6 +27,7 @@ EPOCHS = 100
 BATCH_SIZE = 16
 earlyStoppingVar = 1000
 n_classes = 3
+
 
 def create_sample_weights(label_mask_path):
     output_train = []
@@ -51,6 +52,7 @@ def create_sample_weights(label_mask_path):
             sample_weights_reshape = sample_weights.reshape(n, h, w, y)
             return sample_weights_reshape
 
+
 def convert(seconds):
     seconds = seconds % (24 * 3600)
     hours = seconds // 3600
@@ -59,6 +61,7 @@ def convert(seconds):
     seconds %= 60
 
     return "%d:%02d:%02d" % (hours, minutes, seconds)
+
 
 def generate_samples(model, samples, n_classes):
     # generate fake instance
@@ -73,6 +76,7 @@ def generate_samples(model, samples, n_classes):
     print("Unique X expaded", np.unique(X))
     # create 'fake' class labels (0)
     return X
+
 
 def summarize_performance(iteration, model, dataset_val, n_samples=5, n_classes=n_classes):
     # select a sample of input images
@@ -117,9 +121,12 @@ def summarize_performance(iteration, model, dataset_val, n_samples=5, n_classes=
     filename1 = 'model_%06d.h5' % (iteration + 1)
     model.save(filename1)
     print('>Saved: %s' % (filename1))
+    return filename1
+
+
 
 def generate_real_samples(dataset, n_samples, label_mask_path):
-    sample_weights_reshape=create_sample_weights(label_mask_path)
+    sample_weights_reshape = create_sample_weights(label_mask_path)
     # unpack dataset
     trainA, trainB = dataset
     # choose random instances
@@ -132,11 +139,20 @@ def generate_real_samples(dataset, n_samples, label_mask_path):
     return [X1, X2, sample_weights_batch]
 
 
-def train(dataset, dataset_val, model, label_mask_path, n_epochs=EPOCHS, n_batch=BATCH_SIZE):
+def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, label_mask_path_val,model_name,
+                        tracking_uri='http://127.0.0.1:5000', n_epochs=EPOCHS,
+                        n_batch=BATCH_SIZE):
+
+    mlflow.set_tracking_uri(tracking_uri)
+
+    experiment_name = input("Please enter the experiment name: ")
+    mlflow.set_experiment(experiment_name)
+
     print('##### Network Information ##### '
           '\n Epochs: %s \n Batch Size: %s \n '
           'Early Stopping Iterations: %s ' % (EPOCHS, BATCH_SIZE, earlyStoppingVar))
 
+    '### INITIALIZE VARIABLES USED IN LOOP ###'
     t = time.time()
     trainA, trainB = dataset
     # calculate the number of batches per training epoch
@@ -156,81 +172,100 @@ def train(dataset, dataset_val, model, label_mask_path, n_epochs=EPOCHS, n_batch
     n_batch_array = []
 
     j = 1
+    with (mlflow.start_run()):
+        for i in range(n_steps):
+            # select a batch of real samples
+            [X_realA, X_realB, sample_weights_batch] = generate_real_samples(dataset, n_batch, label_mask_path_train)
 
-    for i in range(n_steps):
-        # select a batch of real samples
-        [X_realA, X_realB, sample_weights_batch] = generate_real_samples(dataset, n_batch, label_mask_path)
+            g_loss = model.train_on_batch(x=X_realA,
+                                          y=X_realB,
+                                          sample_weight=sample_weights_batch)
+            g_loss_array.append(g_loss)
 
-        g_loss = model.train_on_batch(x=X_realA,
-                                      y=X_realB,
-                                      sample_weight=sample_weights_batch)
-        g_loss_array.append(g_loss)
+            [X_realA_val, X_realB_val, sample_weights_batch] = generate_real_samples(dataset_val, n_batch,
+                                                                                     label_mask_path_val) # why use ample weights here?
 
-        [X_realA_val, X_realB_val, sample_weights_batch] = generate_real_samples(dataset_val, n_batch, label_mask_path)
+            val_loss = model.test_on_batch(x=X_realA_val,
+                                           y=X_realB_val,
+                                           sample_weight=sample_weights_batch)
+            val_loss_array.append(val_loss)
 
-        val_loss = model.test_on_batch(x=X_realA_val,
-                                       y=X_realB_val,
-                                       sample_weight=sample_weights_batch)
-        val_loss_array.append(val_loss)
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                valCount = 1
 
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            # print('found better validation loss:' + ' ' + str(best_val_loss))
-            valCount = 1
+            if i == 1:
+                val_loss_arr.append(val_loss)
+                g_loss_arr.append(g_loss)
+                Xdimensions.append(j)
+                j = j + 1
 
-        if i == 1:
-            val_loss_arr.append(val_loss)
-            g_loss_arr.append(g_loss)
-            Xdimensions.append(j)
-            j = j + 1
+            if (i + 1) % bat_per_epo == 0:  # Summarize performance for every epoch
+                val_loss_arr.append(val_loss)
+                g_loss_arr.append(g_loss)
+                Xdimensions.append(j)
+                j = j + 1
+                image_progression_plot = summarize_performance(i, model, dataset)
+                mlflow.log_artifact(image_progression_plot)
+                # Why not increment valCount here?
 
-        if valCount % (bat_per_epo * earlyStoppingVar) == 0:
-            print('Validation loss has not improved for %.3f iterations  ' % earlyStoppingVar)
-            summarize_performance(i, model, dataset)
-            elapsedTime = time.time() - t  # calculate time between now and start of training
-            elapsedTime = convert(elapsedTime)
-            print('Elapsed training time: %s ' % elapsedTime)
+            '### Everything is done, validation loss did not improve ###'
+            if valCount % (bat_per_epo * earlyStoppingVar) == 0:
+                print('Validation loss has not improved for %.3f iterations  ' % earlyStoppingVar)
 
-            # Plot of loss vs batches at the end
-            pyplot.plot(Xdimensions, g_loss_arr, color='blue', label='train loss')
-            pyplot.plot(Xdimensions, val_loss_arr, color='red', label='val loss')
-            pyplot.legend(loc='best')
-            pyplot.ylabel('LOSS')
-            pyplot.xlabel('EPOCHS')
-            filename_loss = 'LossCurve.png'
-            pyplot.savefig(filename_loss)
-            pyplot.close()
-            break
+                elapsedTime = time.time() - t  # calculate time between now and start of training
+                elapsedTime = convert(elapsedTime)
 
-        n_batch_array.append(i + 1)
-        print('>%d, train[%.3f] val[%.3f]' % (i + 1, g_loss, val_loss))
 
-        if (i + 1) % (bat_per_epo) == 0:  # Summarize performance for every epoch
-            val_loss_arr.append(val_loss)
-            g_loss_arr.append(g_loss)
-            Xdimensions.append(j)
-            j = j + 1
+                # Plot of loss vs batches at the end
+                pyplot.plot(Xdimensions, g_loss_arr, color='blue', label='train loss')
+                pyplot.plot(Xdimensions, val_loss_arr, color='red', label='val loss')
+                pyplot.legend(loc='best')
+                pyplot.ylabel('LOSS')
+                pyplot.xlabel('EPOCHS')
+                filename_loss = 'LossCurve.png'
+                pyplot.savefig(filename_loss)
+                pyplot.close()
 
-            summarize_performance(i, model, dataset)
+                image_progression_plot = summarize_performance(i, model, dataset)
 
-        if (i + 1) % (n_steps) == 0:  # Everything is done
-            # Plot of loss vs batches at the end
-            pyplot.plot(Xdimensions, g_loss_arr, color='blue', label='train loss')
-            pyplot.plot(Xdimensions, val_loss_arr, color='red', label='val loss')
-            pyplot.legend(loc='best')
-            pyplot.ylabel('LOSS')
-            pyplot.xlabel('EPOCHS')
-            filename_loss = 'LossCurve.png'
-            pyplot.savefig(filename_loss)
-            pyplot.close()
+                '### MLFLOW LOGGING ###'
+                mlflow.log_artifact(filename_loss)
+                mlflow.log_artifact(image_progression_plot)
+                mlflow.keras.log_model(model, model_name)
+                mlflow.log_metric("Elapsed training time", elapsedTime)
+                break
 
-            elapsedTime = time.time() - t  # calculate time between now and start of training
-            elapsedTime = convert(elapsedTime)
-            print('Elapsed training time: %s ' % elapsedTime)
+            n_batch_array.append(i + 1)
+            print('>%d, train[%.3f] val[%.3f]' % (i + 1, g_loss, val_loss))
 
-        valCount = valCount + 1
-        i = i + 1
+            '### Everything is done, all iterations done ###'
+            if (i + 1) % n_steps == 0:
+                # Plot of loss vs batches at the end
+                pyplot.plot(Xdimensions, g_loss_arr, color='blue', label='train loss')
+                pyplot.plot(Xdimensions, val_loss_arr, color='red', label='val loss')
+                pyplot.legend(loc='best')
+                pyplot.ylabel('LOSS')
+                pyplot.xlabel('EPOCHS')
+                filename_loss = 'LossCurve.png'
+                pyplot.savefig(filename_loss)
+                pyplot.close()
 
+                elapsedTime = time.time() - t  # calculate time between now and start of training
+                elapsedTime = convert(elapsedTime)
+
+                image_progression_plot = summarize_performance(i, model, dataset)
+
+                '### MLFLOW LOGGING ###'
+                mlflow.log_artifact(filename_loss)
+                mlflow.log_artifact(image_progression_plot)
+                mlflow.keras.log_model(model, model_name)
+                mlflow.log_metric("Elapsed training time", elapsedTime)
+
+
+
+            valCount = valCount + 1
+            i = i + 1 # why increment i?
 
 
 # load dataset
@@ -265,18 +300,6 @@ def train(dataset, dataset_val, model, label_mask_path, n_epochs=EPOCHS, n_batch
 #    df, source='C:/PhD/Courses/MLOPS-Course/data/WineQT.csv', name="wine quality", targets="quality"
 #)
 
-#mlflow.set_tracking_uri("http://127.0.0.1:5000")
-#
-#
-#
-## Get the experiment named "Default"
-#experiment_name = "Default"
-#experiment = mlflow.get_experiment_by_name(experiment_name)
-#
-## Get all runs from the experiment
-#runs_df = mlflow.search_runs(experiment_ids=[experiment.experiment_id])
-#
-#
 ## Define a function to train and log models
 #def train_and_log_model(model, model_name):
 #    with (mlflow.start_run()):
@@ -317,16 +340,17 @@ def train(dataset, dataset_val, model, label_mask_path, n_epochs=EPOCHS, n_batch
 #        return model_info
 #
 #
-## Train and log a Linear Regression model
-#linear_reg_model = LinearRegression()
-#model_info_lin = train_and_log_model(linear_reg_model, "LinearRegression")
+##
+##
+### Train and log a Linear Regression model
+##linear_reg_model = LinearRegression()
+##model_info_lin = train_and_log_model(linear_reg_model, "LinearRegression")
+##
+### Train and log a Decision Tree Regressor model
+##tree_model = DecisionTreeRegressor(random_state=42)
+##model_info_dec = train_and_log_model(tree_model, "DecisionTreeRegressor")
 #
-## Train and log a Decision Tree Regressor model
-#tree_model = DecisionTreeRegressor(random_state=42)
-#model_info_dec = train_and_log_model(tree_model, "DecisionTreeRegressor")
-
-
-loaded_model = mlflow.sklearn.load_model(model_info_dec.model_uri)
-
-
-print(loaded_model)
+#
+#loaded_model = mlflow.sklearn.load_model(model_info_dec.model_uri)
+#
+#print(loaded_model)

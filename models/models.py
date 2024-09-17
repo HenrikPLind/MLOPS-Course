@@ -8,7 +8,7 @@ from tensorflow.keras.layers import Conv2DTranspose
 ################################################################
 
 
-def multi_unet_model(n_classes, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS):
+def multi_unet_model(n_classes=1, IMG_HEIGHT=256, IMG_WIDTH=256, IMG_CHANNELS=3):
     # Build the model
     inputs = Input((IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
     # s = Lambda(lambda x: x / 255)(inputs)   #No need for this if we normalize our inputs beforehand
