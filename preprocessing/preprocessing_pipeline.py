@@ -14,8 +14,12 @@ def patchMaking(images, d, e, overlap):
         grid = list(product(range(0, h - h % d, overlap), range(0, w - w % e, overlap)))
         for i, j in grid:
             box = (j, i, j + d, i + e)
-            patch = image.crop(box)
-            patches.append(patch)
+            # Convert the numpy array to a PIL Image
+            patch = image[box[0]:box[2], box[1]:box[3]]
+            # Only append patches that match the desired size (d x e)
+            if patch.shape[0] == d and patch.shape[1] == e:
+                patches.append(patch)
+    patches = np.array(patches)
     return patches
 
 def savePatches(patches, path, images, startImgNo):
@@ -27,7 +31,8 @@ def savePatches(patches, path, images, startImgNo):
             filename.append(name)
     i = 0
     for patch in patches:
-        patch.save(path + filename[i])
+        patch_image = Image.fromarray(patch)
+        patch_image.save(path + filename[i])
         i = i + 1
 
 

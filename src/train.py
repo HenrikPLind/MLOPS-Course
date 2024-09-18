@@ -1,5 +1,6 @@
 import pandas as pd
 from mlflow.data.pandas_dataset import PandasDataset
+from mlflow.models import infer_signature
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from matplotlib import pyplot
@@ -23,34 +24,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 
-EPOCHS = 100
-BATCH_SIZE = 16
 earlyStoppingVar = 1000
 n_classes = 3
-
-
-def create_sample_weights(label_mask_path):
-    output_train = []
-    for directory_path in glob.glob(label_mask_path):
-        for img_path in glob.glob(os.path.join(directory_path, "*.png")):
-            img = cv2.imread(img_path, 0)  # the 0 means we read as grayscale!
-            output_train.append(img)
-
-            # Data augmentation - flipping horizontally and vertically
-            mask_flipped_horiz = cv2.flip(img, 0)
-            output_train.append(mask_flipped_horiz)
-            mask_flipped_vert = cv2.flip(img, 1)
-            output_train.append(mask_flipped_vert)
-            mask_flipped_vert_horiz = cv2.flip(mask_flipped_vert, 0)
-            output_train.append(mask_flipped_vert_horiz)
-
-            output_train = np.array(output_train)
-
-            n, h, w, y = output_train.shape
-            list = output_train.reshape(-1, 1)  # y in compute_sample_weight must be 1D
-            sample_weights = compute_sample_weight('balanced', list)
-            sample_weights_reshape = sample_weights.reshape(n, h, w, y)
-            return sample_weights_reshape
 
 
 def convert(seconds):
@@ -80,7 +55,7 @@ def generate_samples(model, samples, n_classes):
 
 def summarize_performance(iteration, model, dataset_val, n_samples=5, n_classes=n_classes):
     # select a sample of input images
-    [X_realA, X_realB, not_used_here] = generate_real_samples(dataset_val, n_samples)
+    [X_realA, X_realB] = generate_real_samples(dataset_val, n_samples)
     print("X_realA", X_realA.shape)
     # generate a batch of fake samples
     X_generated = generate_samples(model, X_realA, n_classes)  # Prediction on samples (X_realA) using model (model)
@@ -125,23 +100,59 @@ def summarize_performance(iteration, model, dataset_val, n_samples=5, n_classes=
 
 
 
-def generate_real_samples(dataset, n_samples, label_mask_path):
-    sample_weights_reshape = create_sample_weights(label_mask_path)
+def generate_real_samples(dataset, n_samples):
     # unpack dataset
     trainA, trainB = dataset
     # choose random instances
     ix = randint(0, trainA.shape[0], n_samples)
     # retrieve selected images
     X1, X2 = trainA[ix], trainB[ix]
-    sample_weights_batch = sample_weights_reshape[ix]
+
     # generate 'real' class labels (1)
     # y = ones((n_samples, patch_shape, patch_shape, 1))  ### Generate ones for every real patch
-    return [X1, X2, sample_weights_batch]
+    return [X1, X2]
 
+
+import subprocess
+
+
+def start_mlflow_server(host='127.0.0.1', port=5000, backend_uri=None, default_artifact_root=None):
+    """
+    Starts the MLflow tracking server.
+
+    Parameters:
+    - host (str): The host IP where the MLflow server will run (default is '127.0.0.1').
+    - port (int): The port on which the MLflow server will listen (default is 5000).
+    - backend_uri (str): The backend URI for the tracking database (e.g., sqlite:///mlflow.db).
+    - default_artifact_root (str): The root directory where artifacts will be stored.
+    """
+
+    # Base MLflow command
+    command = [
+        'mlflow', 'server',
+        '--host', host,
+        '--port', str(port)
+    ]
+
+    # Add backend store URI if provided
+    if backend_uri:
+        command.extend(['--backend-store-uri', backend_uri])
+
+    # Add default artifact root if provided
+    if default_artifact_root:
+        command.extend(['--default-artifact-root', default_artifact_root])
+
+    # Start the MLflow server in the background
+    print("Starting MLflow server...")
+    process = subprocess.Popen(command)
+
+    # Return the process object so it can be managed or killed later
+    return process
 
 def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, label_mask_path_val,model_name,
-                        tracking_uri='http://127.0.0.1:5000', n_epochs=EPOCHS,
-                        n_batch=BATCH_SIZE):
+                        tracking_uri='http://127.0.0.1:5000', n_epochs=50,
+                        n_batch=8):
+    process = start_mlflow_server()
 
     mlflow.set_tracking_uri(tracking_uri)
 
@@ -150,7 +161,7 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
 
     print('##### Network Information ##### '
           '\n Epochs: %s \n Batch Size: %s \n '
-          'Early Stopping Iterations: %s ' % (EPOCHS, BATCH_SIZE, earlyStoppingVar))
+          'Early Stopping Iterations: %s ' % (n_epochs, n_batch, earlyStoppingVar))
 
     '### INITIALIZE VARIABLES USED IN LOOP ###'
     t = time.time()
@@ -175,19 +186,18 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
     with (mlflow.start_run()):
         for i in range(n_steps):
             # select a batch of real samples
-            [X_realA, X_realB, sample_weights_batch] = generate_real_samples(dataset, n_batch, label_mask_path_train)
+            [X_realA, X_realB] = generate_real_samples(dataset, n_batch)
 
-            g_loss = model.train_on_batch(x=X_realA,
-                                          y=X_realB,
-                                          sample_weight=sample_weights_batch)
+            g_loss, _ = model.train_on_batch(x=X_realA,
+                                          y=X_realB
+                                          )
             g_loss_array.append(g_loss)
 
-            [X_realA_val, X_realB_val, sample_weights_batch] = generate_real_samples(dataset_val, n_batch,
-                                                                                     label_mask_path_val) # why use ample weights here?
+            [X_realA_val, X_realB_val] = generate_real_samples(dataset_val, n_batch) # why use ample weights here?
 
-            val_loss = model.test_on_batch(x=X_realA_val,
-                                           y=X_realB_val,
-                                           sample_weight=sample_weights_batch)
+            val_loss, _ = model.test_on_batch(x=X_realA_val,
+                                           y=X_realB_val
+                                          )
             val_loss_array.append(val_loss)
 
             if val_loss < best_val_loss:
@@ -232,8 +242,12 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
                 '### MLFLOW LOGGING ###'
                 mlflow.log_artifact(filename_loss)
                 mlflow.log_artifact(image_progression_plot)
-                mlflow.keras.log_model(model, model_name)
-                mlflow.log_metric("Elapsed training time", elapsedTime)
+                #mlflow.keras.log_model(model, model_name)
+                signature = infer_signature(X_realA, model.predict(X_realA))
+                mlflow.tensorflow.log_model(
+                    artifact_path="mlartifacts/model",
+                    signature=signature, model=model)
+                mlflow.log_param("Elapsed training time", elapsedTime)
                 break
 
             n_batch_array.append(i + 1)
@@ -259,8 +273,10 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
                 '### MLFLOW LOGGING ###'
                 mlflow.log_artifact(filename_loss)
                 mlflow.log_artifact(image_progression_plot)
-                mlflow.keras.log_model(model, model_name)
-                mlflow.log_metric("Elapsed training time", elapsedTime)
+                signature = infer_signature(X_realA, model.predict(X_realA))
+                mlflow.tensorflow.log_model(artifact_path="mlartifacts/model",signature=signature, model=model)
+                #mlflow.keras.log_model(model, model_name)
+                mlflow.log_param("Elapsed training time", elapsedTime)
 
 
 

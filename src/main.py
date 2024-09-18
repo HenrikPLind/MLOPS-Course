@@ -5,12 +5,13 @@ from data_version_controle.dvc_method import add_data_to_dvc
 from models.models import multi_unet_model
 from train import train_and_log_model
 
+
 #data_input_folder = input('Please enter the folder where the input data is stored: ')
-data_input_folder = "C:/Users/mose_/Desktop/AllInput"
+data_input_folder = "C:/Users/mose_/Desktop/AllInput - Copy"
 print(f"The folder path you entered is {data_input_folder}")
 
 #data_mask_folder = input("Please enter the folder where the labels are stored: ")
-data_mask_folder = "C:/Users/mose_/Desktop/AllMasks"
+data_mask_folder = "C:/Users/mose_/Desktop/AllMasks - Copy"
 print(f"the folder path you entered is {data_mask_folder}")
 
 # Save csv file on image information to use GE
@@ -22,22 +23,22 @@ should_train = check_expectations(csv_file='image_details.csv', output_file='exp
 
 if should_train:
     #folder_path_training = input("Please enter the folder path where training input data should be stored: ")
-    folder_path_training = "C:/Users/mose_/Desktop/Data/Training/input"
+    folder_path_training = "../Data/Training/input/"
     print(f"The folder path you entered is: {folder_path_training}")
     #folder_path_training_label = input("Please enter the folder path where training label data should be stored: ")
-    folder_path_training_label = "C:/Users/mose_/Desktop/Data/Training/output"
+    folder_path_training_label = "../Data/Training/output/"
     print(f"The folder path you entered is: {folder_path_training_label}")
     #folder_path_validation = input("Please enter the folder path where validation input data should be stored: ")
-    folder_path_validation = "C:/Users/mose_/Desktop/Data/Validation/input"
+    folder_path_validation = "../Data/Validation/input/"
     print(f"The folder path you entered is: {folder_path_validation}")
     #folder_path_validation_label = input("Please enter the folder path where validation label data should be stored: ")
-    folder_path_validation_label = "C:/Users/mose_/Desktop/Data/Validation/output"
+    folder_path_validation_label = "../Data/Validation/output/"
     print(f"The folder path you entered is: {folder_path_validation_label}")
     #folder_path_testing = input("Please enter the folder path where testing input data should be stored: ")
-    folder_path_testing = "C:/Users/mose_/Desktop/Data/Test/input"
+    folder_path_testing = "../Data/Test/input/"
     print(f"The folder path you entered is: {folder_path_testing}")
     #folder_path_testing_label = input("Please enter the folder path where testing label data should be stored: ")
-    folder_path_testing_label = "C:/Users/mose_/Desktop/Data/Test/output"
+    folder_path_testing_label = "../Data/Test/output/"
     print(f"The folder path you entered is: {folder_path_testing_label}")
 
     # Preprocess images
@@ -46,16 +47,18 @@ if should_train:
                             folder_validation=folder_path_validation, folder_validation_label=folder_path_validation_label,
                             folder_testing=folder_path_testing,folder_testing_label=folder_path_testing_label)
     # Version the data after it has been preprocessed
-    folder_path_data = input("Please enter the folder path where all data is stored: ")
+    #folder_path_data = input("Please enter the folder path where all data is stored: ")
+    folder_path_data = "C:/Users/mose_/AAU/Sundhedstek/PhD/Courses/Data and Machine Learning Operations/Code_mlops_Course/MLOPS-Course/Data"
     print('Versioning data (coarse)')
     add_data_to_dvc(folder_path_data)
 
+
     # Perform training with MLFlow
-    train_and_log_model(model=multi_unet_model, dataset=[training_patches, training_label_patches],
+    train_and_log_model(model=multi_unet_model(), dataset=[training_patches, training_label_patches],
                         dataset_val=[validation_patches, validation_label_patches],
                         label_mask_path_train=folder_path_training_label,
                         label_mask_path_val=folder_path_validation_label,
-                        model_name='multi_unet', n_epochs=10, n_batch=8)
+                        model_name='multi_unet', n_epochs=1, n_batch=8)
     # Deploy model using MLFlow
 
 
