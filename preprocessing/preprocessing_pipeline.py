@@ -4,11 +4,13 @@ from itertools import product
 from PIL import Image
 from sklearn.model_selection import train_test_split
 
-
 def patchMaking(images, d, e, overlap):
     patches = []
     for image in images:
-        w, h = image.size
+
+        w = image.shape[0]
+        h = image.shape[1]
+
         grid = list(product(range(0, h - h % d, overlap), range(0, w - w % e, overlap)))
         for i, j in grid:
             box = (j, i, j + d, i + e)
