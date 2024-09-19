@@ -69,6 +69,8 @@ def preprocessing(input_images, label_images,
     savePatches(patches=test_label_patches, path=folder_testing_label, images=y_test, startImgNo=0)
 
 
-    return training_patches, training_label_patches, validation_patches, validation_label_patches
+    return training_patches, training_label_patches, \
+           validation_patches, validation_label_patches, \
+           test_patches, test_label_patches
 
 

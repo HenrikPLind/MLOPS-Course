@@ -1,10 +1,11 @@
 from data_quality.GE_example import check_expectations
 from data_quality.create_csv_from_images import process_images_and_save_as_csv
-from preprocessing.preprocessing_pipeline import preprocessing
 from data_version_controle.dvc_method import add_data_to_dvc
+from deployment.deploy_model import deploy_with_mlflow
+from evaluation.evaluate_perfomance import evaluate_segmentation
 from models.models import multi_unet_model
+from preprocessing.preprocessing_pipeline import preprocessing
 from train import train_and_log_model
-
 
 #data_input_folder = input('Please enter the folder where the input data is stored: ')
 data_input_folder = "D:/MLOPS/Data/Data"
@@ -42,10 +43,13 @@ if should_train:
     print(f"The folder path you entered is: {folder_path_testing_label}")
 
     # Preprocess images
-    training_patches, training_label_patches, validation_patches, validation_label_patches = preprocessing(input_images=input_images, label_images=label_images,
-                            folder_training=folder_path_training, folder_training_label=folder_path_training_label,
-                            folder_validation=folder_path_validation, folder_validation_label=folder_path_validation_label,
-                            folder_testing=folder_path_testing,folder_testing_label=folder_path_testing_label)
+    training_patches, training_label_patches, \
+    validation_patches, validation_label_patches, \
+    test_patches, test_label_patches = \
+    preprocessing(input_images=input_images, label_images=label_images,
+                  folder_training=folder_path_training, folder_training_label=folder_path_training_label,
+                  folder_validation=folder_path_validation, folder_validation_label=folder_path_validation_label,
+                  folder_testing=folder_path_testing,folder_testing_label=folder_path_testing_label)
     # Version the data after it has been preprocessed
     #folder_path_data = input("Please enter the folder path where all data is stored: ")
     folder_path_data = "data"
@@ -54,12 +58,21 @@ if should_train:
 
 
     # Perform training with MLFlow
-    train_and_log_model(model=multi_unet_model(), dataset=[training_patches, training_label_patches],
-                        dataset_val=[validation_patches, validation_label_patches],
-                        label_mask_path_train=folder_path_training_label,
-                        label_mask_path_val=folder_path_validation_label,
-                        model_name='multi_unet', n_epochs=1, n_batch=8)
-    # Deploy model using MLFlow
+    run_id, experiment_id = train_and_log_model(model=multi_unet_model(), dataset=[training_patches, training_label_patches],
+                            dataset_val=[validation_patches, validation_label_patches],
+                            label_mask_path_train=folder_path_training_label,
+                            label_mask_path_val=folder_path_validation_label,
+                            model_name='multi_unet', n_epochs=1, n_batch=8)
+
+    # Evaluate model performance
+    result = evaluate_segmentation(image=test_patches[0], ground_truth=test_label_patches[0],
+                                   experiment_id='502923992474068775', run_id='d026065d811a4ca88f6e51f15e35c7c5')
+
+    print()
+
+
+    # Deploy model
+    deploy_with_mlflow()
 
 
 

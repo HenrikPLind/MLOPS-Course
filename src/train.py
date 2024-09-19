@@ -137,6 +137,8 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
                         n_batch=8):
     process = start_mlflow_server()
 
+
+
     mlflow.set_tracking_uri(tracking_uri)
 
     experiment_name = input("Please enter the experiment name: ")
@@ -166,7 +168,13 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
     n_batch_array = []
 
     j = 1
-    with (mlflow.start_run()):
+    with (mlflow.start_run()) as run:
+        # Get the run ID of the active run
+        run_id = run.info.run_id
+
+        # Get the experiment ID of the active run
+        experiment_id = run.info.experiment_id
+
         for i in range(n_steps):
             # select a batch of real samples
             [X_realA, X_realB] = generate_real_samples(dataset, n_batch)
@@ -262,7 +270,7 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
 
             valCount = valCount + 1
             i = i + 1 # why increment i?
-
+    return run_id, experiment_id
 
 
 # load dataset
