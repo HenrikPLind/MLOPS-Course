@@ -41,7 +41,7 @@ def preprocessing(input_images, label_images,
                   folder_validation, folder_validation_label,
                   folder_testing, folder_testing_label):
     # Split the data into training and testing sets
-    X_train, X_val, y_train, y_val = train_test_split(input_images, label_images, test_size=0.2, random_state=42)
+    X_train, X_val, y_train, y_val = train_test_split(input_images, label_images, test_size=0.5, random_state=42)
     X_val, X_test, y_val, y_test = train_test_split(X_val, y_val,  test_size=0.2, random_state=42)
 
     '### Create training input and label patches ###'

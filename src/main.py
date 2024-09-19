@@ -48,7 +48,7 @@ if should_train:
                             folder_testing=folder_path_testing,folder_testing_label=folder_path_testing_label)
     # Version the data after it has been preprocessed
     #folder_path_data = input("Please enter the folder path where all data is stored: ")
-    folder_path_data = "../data"
+    folder_path_data = "data"
     print('Versioning data (coarse)')
     add_data_to_dvc(folder_path_data)
 

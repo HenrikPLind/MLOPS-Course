@@ -1,28 +1,11 @@
-import pandas as pd
-from mlflow.data.pandas_dataset import PandasDataset
-from mlflow.models import infer_signature
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from matplotlib import pyplot
 import time
-from matplotlib.image import imread
-from numpy.random import randint
-from sklearn.utils import compute_sample_weight
-from tensorflow.python.keras.metrics import MeanIoU
-from tensorflow.python.keras.utils.np_utils import to_categorical, normalize
-import os
-import glob
-from matplotlib import pyplot as plt, pyplot
-import numpy as np
-import cv2
-import tensorflow.keras.backend as K
-import tensorflow as tf
-from models.models import multi_unet_model  # uses softmax
 import mlflow
 import mlflow.sklearn
-from sklearn.linear_model import LinearRegression
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.metrics import mean_squared_error, r2_score
+import numpy as np
+from matplotlib import pyplot
+from mlflow.models import infer_signature
+from numpy.random import randint
+from tensorflow.python.keras.utils.np_utils import to_categorical
 
 earlyStoppingVar = 1000
 n_classes = 3
@@ -188,15 +171,12 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
             # select a batch of real samples
             [X_realA, X_realB] = generate_real_samples(dataset, n_batch)
 
-            g_loss, _ = model.train_on_batch(x=X_realA,
-                                          y=X_realB
-                                          )
+            g_loss, _ = model.train_on_batch(x=X_realA, y=X_realB)
             g_loss_array.append(g_loss)
 
-            [X_realA_val, X_realB_val] = generate_real_samples(dataset_val, n_batch) # why use ample weights here?
+            [X_realA_val, X_realB_val] = generate_real_samples(dataset_val, n_batch)
 
-            val_loss, _ = model.test_on_batch(x=X_realA_val,
-                                           y=X_realB_val
+            val_loss, _ = model.test_on_batch(x=X_realA_val, y=X_realB_val
                                           )
             val_loss_array.append(val_loss)
 
