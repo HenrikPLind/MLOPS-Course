@@ -57,7 +57,7 @@ def send_alert_email(to_email, message):
     smtp_password = "your_password"
 
     msg = MIMEText(message)
-    msg['Subject'] = 'Data Validation Alert'
+    msg['Subject'] = 'data validation Alert'
     msg['From'] = smtp_user
     msg['To'] = to_email
 

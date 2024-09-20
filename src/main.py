@@ -7,12 +7,17 @@ from models.models import multi_unet_model
 from preprocessing.preprocessing_pipeline import preprocessing
 from train import train_and_log_model
 
+#hyperparameters
+n_classes = 3
+
 #data_input_folder = input('Please enter the folder where the input data is stored: ')
-data_input_folder = "D:/MLOPS/Data/AllInput"
+#data_input_folder = "D:/MLOPS/data/AllInput"
+data_input_folder = "C:/Users/mose_/Desktop/dataHenrik/AllInput - Copy"
 print(f"The folder path you entered is {data_input_folder}")
 
 #data_mask_folder = input("Please enter the folder where the labels are stored: ")
-data_mask_folder = "D:/MLOPS/Data/AllMasks"
+#data_mask_folder = "D:/MLOPS/data/AllMasks"
+data_mask_folder = "C:/Users/mose_/Desktop/dataHenrik/AllMasks - Copy"
 print(f"the folder path you entered is {data_mask_folder}")
 
 # Save csv file on image information to use GE
@@ -49,7 +54,7 @@ if should_train:
     preprocessing(input_images=input_images, label_images=label_images,
                   folder_training=folder_path_training, folder_training_label=folder_path_training_label,
                   folder_validation=folder_path_validation, folder_validation_label=folder_path_validation_label,
-                  folder_testing=folder_path_testing,folder_testing_label=folder_path_testing_label)
+                  folder_testing=folder_path_testing,folder_testing_label=folder_path_testing_label,n_classes=n_classes)
     # Version the data after it has been preprocessed
     #folder_path_data = input("Please enter the folder path where all data is stored: ")
     folder_path_data = "data"
@@ -64,6 +69,7 @@ if should_train:
                             label_mask_path_val=folder_path_validation_label,
                             model_name='multi_unet', n_epochs=1, n_batch=8)
 
+    print("entering eval now")
     # Evaluate model performance
     result = evaluate_segmentation(image=test_patches[0], ground_truth=test_label_patches[0],
                                    experiment_id=experiment_id, run_id=run_id)
@@ -73,14 +79,6 @@ if should_train:
 
     # Deploy model
     deploy_with_mlflow()
-
-
-
-
-
-
-
-
 
 
 

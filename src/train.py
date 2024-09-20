@@ -8,11 +8,9 @@ from numpy.random import randint
 from tensorflow.python.keras.utils.np_utils import to_categorical
 import tensorflow as tf
 
-
-
-earlyStoppingVar = 1000
 n_classes = 3
 
+earlyStoppingVar = 1000
 
 def convert(seconds):
     seconds = seconds % (24 * 3600)
@@ -39,7 +37,7 @@ def generate_samples(model, samples, n_classes):
     return X
 
 
-def summarize_performance(iteration, model, dataset_val, n_samples=5, n_classes=n_classes):
+def summarize_performance(iteration, model, dataset_val, n_samples=5):
     # select a sample of input images
     [X_realA, X_realB] = generate_real_samples(dataset_val, n_samples)
     print("X_realA", X_realA.shape)
@@ -212,7 +210,7 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
 
             '### Everything is done, validation loss did not improve ###'
             if valCount % (bat_per_epo * earlyStoppingVar) == 0:
-                print('Validation loss has not improved for %.3f iterations  ' % earlyStoppingVar)
+                print('validation loss has not improved for %.3f iterations  ' % earlyStoppingVar)
 
                 elapsedTime = time.time() - t  # calculate time between now and start of training
                 elapsedTime = convert(elapsedTime)
@@ -228,7 +226,7 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
                 pyplot.savefig(filename_loss)
                 pyplot.close()
 
-                image_progression_plot = summarize_performance(i, model, dataset)
+                image_progression_plot = summarize_performance(i, model, dataset, n_classes)
 
                 '### MLFLOW LOGGING ###'
                 mlflow.log_artifact(filename_loss)

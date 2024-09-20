@@ -38,7 +38,7 @@ def evaluate_segmentation(image, ground_truth, experiment_id, run_id, num_classe
     Returns:
     dict: A dictionary with Dice and IoU scores per class.
     """
-    model_uri = f"D:/MLOPS/MLOPS-Course/src/mlartifacts/{experiment_id}/{run_id}/artifacts/mlartifacts/model"
+    model_uri = f"../src/mlartifacts/{experiment_id}/{run_id}/artifacts/mlartifacts/model"
     print(f'Fetching model from: {model_uri}')
     model = mlflow.tensorflow.load_model(model_uri)
 
@@ -47,6 +47,7 @@ def evaluate_segmentation(image, ground_truth, experiment_id, run_id, num_classe
 
     # Convert predictions to class labels
     predicted_mask = np.argmax(predicted_mask, axis=-1)
+    predicted_GT = np.argmax(ground_truth, axis=-1)
 
     # Initialize results dictionary
     results = {"dice": {}, "iou": {}}
@@ -54,7 +55,7 @@ def evaluate_segmentation(image, ground_truth, experiment_id, run_id, num_classe
     # Loop through each class (including background)
     for class_label in range(num_classes):
         # Calculate Dice coefficient for the class
-        dice = dice_coefficient_per_class(ground_truth, predicted_mask, class_label)
+        dice = dice_coefficient_per_class(predicted_GT, predicted_mask, class_label)
 
         # Store results
         results["dice"][f"class_{class_label}"] = dice
