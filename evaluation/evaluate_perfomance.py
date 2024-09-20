@@ -24,7 +24,7 @@ def dice_coefficient_per_class(y_true, y_pred, class_label, smooth=1e-6):
     return dice
 
 
-def evaluate_segmentation(image, ground_truth, experiment_id, run_id, num_classes=3):
+def evaluate_segmentation(model, image, ground_truth, experiment_id, run_id, num_classes=3):
     """
     Evaluate a segmentation model by calculating the predicted segmentation mask and
     comparing it to the ground truth segmentation. Calculates Dice and IoU per class.
@@ -38,24 +38,21 @@ def evaluate_segmentation(image, ground_truth, experiment_id, run_id, num_classe
     Returns:
     dict: A dictionary with Dice and IoU scores per class.
     """
-    model_uri = f"../src/mlartifacts/{experiment_id}/{run_id}/artifacts/mlartifacts/model"
-    print(f'Fetching model from: {model_uri}')
-    model = mlflow.tensorflow.load_model(model_uri)
 
     # Perform model inference to get predicted mask
     predicted_mask = model.predict(np.expand_dims(image, axis=0))[0]  # Assuming input is single image
 
     # Convert predictions to class labels
     predicted_mask = np.argmax(predicted_mask, axis=-1)
-    predicted_GT = np.argmax(ground_truth, axis=-1)
+    GT = np.argmax(ground_truth, axis=-1)
 
     # Initialize results dictionary
-    results = {"dice": {}, "iou": {}}
+    results = {"dice": {}}
 
     # Loop through each class (including background)
     for class_label in range(num_classes):
         # Calculate Dice coefficient for the class
-        dice = dice_coefficient_per_class(predicted_GT, predicted_mask, class_label)
+        dice = dice_coefficient_per_class(GT, predicted_mask, class_label)
 
         # Store results
         results["dice"][f"class_{class_label}"] = dice
@@ -63,4 +60,35 @@ def evaluate_segmentation(image, ground_truth, experiment_id, run_id, num_classe
     return results
 
 
+def evaluate_all_images(model, images, ground_truths, experiment_id, run_id, num_classes=3):
+    """
+    Evaluate segmentation on multiple test images and return Dice scores for each image and class.
+
+    Args:
+    images (list of numpy arrays): List of input test images.
+    ground_truths (list of numpy arrays): List of ground truth segmentation masks.
+    num_classes (int): Number of classes (including background).
+
+    Returns:
+    dict: A dictionary with Dice scores for all images and classes.
+    """
+    all_results = {}
+
+    for idx, (image, ground_truth) in enumerate(zip(images, ground_truths)):
+        # Evaluate segmentation for each image
+        results = evaluate_segmentation(model, image, ground_truth, experiment_id, run_id, num_classes)
+
+        # Store the results with image index
+        all_results[f"image_{idx}"] = results
+
+    return all_results
+
+
+# Example usage:
+# images = [image1, image2, ...]  # List of test images
+# ground_truths = [gt1, gt2, ...]  # List of corresponding ground truth masks
+# experiment_id = '12345'
+# run_id = '67890'
+# dice_scores = evaluate_all_images(images, ground_truths, experiment_id, run_id, num_classes=3)
+# print(dice_scores)
 

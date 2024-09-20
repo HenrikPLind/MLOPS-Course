@@ -2,22 +2,23 @@ from data_quality.GE_example import check_expectations
 from data_quality.create_csv_from_images import process_images_and_save_as_csv
 from data_version_controle.dvc_method import add_data_to_dvc
 from deployment.deploy_model import deploy_with_mlflow
-from evaluation.evaluate_perfomance import evaluate_segmentation
+from evaluation.evaluate_perfomance import evaluate_segmentation, evaluate_all_images
 from models.models import multi_unet_model
 from preprocessing.preprocessing_pipeline import preprocessing
 from train import train_and_log_model
+import mlflow.keras
 
 #hyperparameters
 n_classes = 3
 
 #data_input_folder = input('Please enter the folder where the input data is stored: ')
-#data_input_folder = "D:/MLOPS/data/AllInput"
-data_input_folder = "C:/Users/mose_/Desktop/dataHenrik/AllInput - Copy"
+data_input_folder = "D:/MLOPS/Data/AllInput"
+
 print(f"The folder path you entered is {data_input_folder}")
 
 #data_mask_folder = input("Please enter the folder where the labels are stored: ")
-#data_mask_folder = "D:/MLOPS/data/AllMasks"
-data_mask_folder = "C:/Users/mose_/Desktop/dataHenrik/AllMasks - Copy"
+data_mask_folder = "D:/MLOPS/Data/AllMasks"
+
 print(f"the folder path you entered is {data_mask_folder}")
 
 # Save csv file on image information to use GE
@@ -69,9 +70,13 @@ if should_train:
                             label_mask_path_val=folder_path_validation_label,
                             model_name='multi_unet', n_epochs=1, n_batch=8)
 
-    print("entering eval now")
+    # load model
+    model_uri = f"../src/mlartifacts/{experiment_id}/{run_id}/artifacts/mlartifacts/model"
+    print(f'Fetching model from: {model_uri}')
+    model = mlflow.tensorflow.load_model(model_uri)
+
     # Evaluate model performance
-    result = evaluate_segmentation(image=test_patches[0], ground_truth=test_label_patches[0],
+    result = evaluate_all_images(model, images=test_patches, ground_truths=test_label_patches,
                                    experiment_id=experiment_id, run_id=run_id)
 
     print()
