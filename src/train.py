@@ -6,6 +6,9 @@ from matplotlib import pyplot
 from mlflow.models import infer_signature
 from numpy.random import randint
 from tensorflow.python.keras.utils.np_utils import to_categorical
+import tensorflow as tf
+
+
 
 earlyStoppingVar = 1000
 n_classes = 3

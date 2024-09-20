@@ -8,11 +8,11 @@ from preprocessing.preprocessing_pipeline import preprocessing
 from train import train_and_log_model
 
 #data_input_folder = input('Please enter the folder where the input data is stored: ')
-data_input_folder = "D:/MLOPS/Data/Data"
+data_input_folder = "D:/MLOPS/Data/AllInput"
 print(f"The folder path you entered is {data_input_folder}")
 
 #data_mask_folder = input("Please enter the folder where the labels are stored: ")
-data_mask_folder = "D:/MLOPS/Data/Data"
+data_mask_folder = "D:/MLOPS/Data/AllMasks"
 print(f"the folder path you entered is {data_mask_folder}")
 
 # Save csv file on image information to use GE
@@ -66,7 +66,7 @@ if should_train:
 
     # Evaluate model performance
     result = evaluate_segmentation(image=test_patches[0], ground_truth=test_label_patches[0],
-                                   experiment_id='502923992474068775', run_id='d026065d811a4ca88f6e51f15e35c7c5')
+                                   experiment_id=experiment_id, run_id=run_id)
 
     print()
 
