@@ -5,7 +5,9 @@ from evaluation.evaluate_perfomance import evaluate_all_images
 import great_expectations as gx
 
 
-def model_deployment_check(old_model, old_ex_id, old_run_id, new_model, new_ex_id, new_run_id, test_input_patches, test_mask_patches, csv_filename):
+def model_deployment_check(old_model, old_ex_id, old_run_id, new_model, new_ex_id,
+                           new_run_id, test_input_patches, test_mask_patches,
+                           csv_filename, output_file):
 
 ########################## PERFORMANCE EVALUATION PART ######################################
     # Evaluate model performance
@@ -84,24 +86,33 @@ def model_deployment_check(old_model, old_ex_id, old_run_id, new_model, new_ex_i
                                                                                    equal=True)
 
 
+# Collect results
+    results = {
+        "Class 0 old threshold": class_0_old_above_threshold,
+        "Class 1 old threshold": class_1_old_above_threshold,
+        "Class 2 old threshold": class_2_old_above_threshold,
+        "Class 0 new threshold": class_0_new_above_threshold,
+        "Class 1 new threshold": class_1_new_above_threshold,
+        "Class 2 new threshold": class_2_new_above_threshold,
+        "Comparison class 0": comparison_class0,
+        "Comparison class 1": comparison_class1,
+        "Comparison class 2": comparison_class2
+    }
 
+# Write results to a file
+    with open(output_file, 'w') as f:
+        for key, result in results.items():
+            f.write(f"{key}:\n")
+            f.write(str(result) + "\n\n")
 
+    print(f"Results saved to {output_file}")
 
+    # Check and alert if any expectations are not met
+    failed_expectations = [key for key, result in results.items() if not result['success']]
 
-
-    columns_in_range = validator.expect_column_values_to_be_between(column='blurriness',
-                                                                    min_value=0,
-                                                                    max_value=30)
-    image_size_expectation = validator.expect_column_pair_values_to_be_in_set(column_A='image_x_res',
-                                                                              column_B='image_y_res',
-                                                                              value_pairs_set=[(2708,
-                                                                                                3384)])
-    image_channel_expectation = validator.expect_column_distinct_values_to_equal_set(column='image_z_res',
-                                                                                     value_set=([3]))
-
-
-
-
-
-
-    return
+    if failed_expectations:
+        alert_message = f"Expectations failed for the following checks: {', '.join(failed_expectations)}"
+        print(alert_message)
+        return False  # Indicates that the data is not suitable for training
+    else:
+        return True  # Indicates that the data is suitable for training

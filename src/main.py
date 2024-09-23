@@ -1,5 +1,3 @@
-from torch import candidate
-
 from data_quality.GE_example import check_expectations
 from data_quality.create_csv_from_images import process_images_and_save_as_csv
 from data_version_controle.dvc_method import add_data_to_dvc
@@ -78,8 +76,8 @@ if should_train:
 
 ##################################################################################################################
         #NEW MODEL
-    experiment_id_new = "568984660945487376"
-    run_id_new = "30cf9d6599a4418886b27ca507a884b8"
+    experiment_id_new = "187321980032475183"
+    run_id_new = "fd22c4cf50844db5a3e41b0f83c9dcf4"
 
     # load model_old
     new_model_uri = f"../src/mlartifacts/{experiment_id_new}/{run_id_new}/artifacts/mlartifacts/model"
@@ -88,8 +86,8 @@ if should_train:
 
 ##################################################################################################################
         #OLD MODEL
-    experiment_id_old = "568984660945487376"
-    run_id_old = "30cf9d6599a4418886b27ca507a884b8"
+    experiment_id_old = "187321980032475183"
+    run_id_old = "fd22c4cf50844db5a3e41b0f83c9dcf4"
 
     # load model_old
     old_model_uri = f"../src/mlartifacts/{experiment_id_old}/{run_id_old}/artifacts/mlartifacts/model"
@@ -101,7 +99,11 @@ if should_train:
 
     print()
 # Perform Great Expectations on csv file
-performance_check = model_deployment_check(old_model, experiment_id_old, run_id_old, new_model, experiment_id_new, run_id_new, test_input_patches, test_mask_patches, csv_filename="performance_deployment.csv")
+should_deploy = model_deployment_check(old_model, experiment_id_old, run_id_old,
+                                           new_model, experiment_id_new, run_id_new,
+                                           test_input_patches, test_mask_patches,
+                                           csv_filename="performance_deployment.csv",
+                                           output_file="expectation_trigger_deployment_data.txt" )
 
 # Deploy model
 deploy_with_mlflow()

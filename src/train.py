@@ -52,8 +52,6 @@ def summarize_performance(iteration, model, dataset_val, n_samples=5):
     for i in range(n_samples):
         pyplot.subplot(3, n_samples, 1 + i)  # pyplot.subplot(3, n_samples, 1 + i)
         pyplot.axis('off')
-        print("Input data", X_realA[i])
-        print("Shape of input", X_realA.shape)
         pyplot.imshow(X_realA[i])
         pyplot.title("input")
     #### plot generated target image
