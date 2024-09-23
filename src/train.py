@@ -1,32 +1,16 @@
-import pandas as pd
-from mlflow.data.pandas_dataset import PandasDataset
-from mlflow.models import infer_signature
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from matplotlib import pyplot
 import time
-from matplotlib.image import imread
-from numpy.random import randint
-from sklearn.utils import compute_sample_weight
-from tensorflow.python.keras.metrics import MeanIoU
-from tensorflow.python.keras.utils.np_utils import to_categorical, normalize
-import os
-import glob
-from matplotlib import pyplot as plt, pyplot
-import numpy as np
-import cv2
-import tensorflow.keras.backend as K
-import tensorflow as tf
-from models.models import multi_unet_model  # uses softmax
 import mlflow
 import mlflow.sklearn
-from sklearn.linear_model import LinearRegression
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.metrics import mean_squared_error, r2_score
+import numpy as np
+from matplotlib import pyplot
+from mlflow.models import infer_signature
+from numpy.random import randint
+from tensorflow.python.keras.utils.np_utils import to_categorical
+import tensorflow as tf
 
-earlyStoppingVar = 1000
 n_classes = 3
 
+earlyStoppingVar = 1000
 
 def convert(seconds):
     seconds = seconds % (24 * 3600)
@@ -53,7 +37,7 @@ def generate_samples(model, samples, n_classes):
     return X
 
 
-def summarize_performance(iteration, model, dataset_val, n_samples=5, n_classes=n_classes):
+def summarize_performance(iteration, model, dataset_val, n_samples=5):
     # select a sample of input images
     [X_realA, X_realB] = generate_real_samples(dataset_val, n_samples)
     print("X_realA", X_realA.shape)
@@ -154,6 +138,8 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
                         n_batch=8):
     process = start_mlflow_server()
 
+
+
     mlflow.set_tracking_uri(tracking_uri)
 
     experiment_name = input("Please enter the experiment name: ")
@@ -183,20 +169,23 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
     n_batch_array = []
 
     j = 1
-    with (mlflow.start_run()):
+    with (mlflow.start_run()) as run:
+        # Get the run ID of the active run
+        run_id = run.info.run_id
+
+        # Get the experiment ID of the active run
+        experiment_id = run.info.experiment_id
+
         for i in range(n_steps):
             # select a batch of real samples
             [X_realA, X_realB] = generate_real_samples(dataset, n_batch)
 
-            g_loss, _ = model.train_on_batch(x=X_realA,
-                                          y=X_realB
-                                          )
+            g_loss, _ = model.train_on_batch(x=X_realA, y=X_realB)
             g_loss_array.append(g_loss)
 
-            [X_realA_val, X_realB_val] = generate_real_samples(dataset_val, n_batch) # why use ample weights here?
+            [X_realA_val, X_realB_val] = generate_real_samples(dataset_val, n_batch)
 
-            val_loss, _ = model.test_on_batch(x=X_realA_val,
-                                           y=X_realB_val
+            val_loss, _ = model.test_on_batch(x=X_realA_val, y=X_realB_val
                                           )
             val_loss_array.append(val_loss)
 
@@ -221,7 +210,7 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
 
             '### Everything is done, validation loss did not improve ###'
             if valCount % (bat_per_epo * earlyStoppingVar) == 0:
-                print('Validation loss has not improved for %.3f iterations  ' % earlyStoppingVar)
+                print('validation loss has not improved for %.3f iterations  ' % earlyStoppingVar)
 
                 elapsedTime = time.time() - t  # calculate time between now and start of training
                 elapsedTime = convert(elapsedTime)
@@ -237,7 +226,7 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
                 pyplot.savefig(filename_loss)
                 pyplot.close()
 
-                image_progression_plot = summarize_performance(i, model, dataset)
+                image_progression_plot = summarize_performance(i, model, dataset, n_classes)
 
                 '### MLFLOW LOGGING ###'
                 mlflow.log_artifact(filename_loss)
@@ -282,7 +271,7 @@ def train_and_log_model(dataset, dataset_val, model, label_mask_path_train, labe
 
             valCount = valCount + 1
             i = i + 1 # why increment i?
-
+    return run_id, experiment_id
 
 
 # load dataset

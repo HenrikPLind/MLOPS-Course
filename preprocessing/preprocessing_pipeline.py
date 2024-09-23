@@ -3,6 +3,8 @@ import tifffile as tiff
 from itertools import product
 from PIL import Image
 from sklearn.model_selection import train_test_split
+from tensorflow.python.keras.utils.np_utils import to_categorical
+
 
 def patchMaking(images, d, e, overlap):
     patches = []
@@ -39,9 +41,17 @@ def savePatches(patches, path, images, startImgNo):
 def preprocessing(input_images, label_images,
                   folder_training, folder_training_label,
                   folder_validation, folder_validation_label,
-                  folder_testing, folder_testing_label):
-    # Split the data into training and testing sets
-    X_train, X_val, y_train, y_val = train_test_split(input_images, label_images, test_size=0.2, random_state=42)
+                  folder_testing, folder_testing_label, n_classes):
+    # Split the data into training, validation and testing sets
+
+    label_images = np.array(label_images)
+    label_images = np.expand_dims(label_images, axis=3)
+    label_images = to_categorical(label_images, num_classes=n_classes)
+    label_images = label_images.reshape((label_images.shape[0], label_images.shape[1], label_images.shape[2], n_classes))
+    label_images = label_images.astype(np.uint8)
+    label_images = list(label_images)
+
+    X_train, X_val, y_train, y_val = train_test_split(input_images, label_images, test_size=0.5, random_state=42)
     X_val, X_test, y_val, y_test = train_test_split(X_val, y_val,  test_size=0.2, random_state=42)
 
     '### Create training input and label patches ###'
@@ -69,6 +79,8 @@ def preprocessing(input_images, label_images,
     savePatches(patches=test_label_patches, path=folder_testing_label, images=y_test, startImgNo=0)
 
 
-    return training_patches, training_label_patches, validation_patches, validation_label_patches
+    return training_patches, training_label_patches, \
+           validation_patches, validation_label_patches, \
+           test_patches, test_label_patches
 
 
