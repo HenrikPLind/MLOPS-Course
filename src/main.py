@@ -12,12 +12,14 @@ import mlflow.keras
 n_classes = 3
 
 #data_input_folder = input('Please enter the folder where the input data is stored: ')
-data_input_folder = "D:/MLOPS/Data/AllInput"
+#data_input_folder = "D:/MLOPS/Data/AllInput"
+data_input_folder = "C:/Users/mose_/Desktop/dataHenrik/AllInput - Copy"
 
 print(f"The folder path you entered is {data_input_folder}")
 
 #data_mask_folder = input("Please enter the folder where the labels are stored: ")
-data_mask_folder = "D:/MLOPS/Data/AllMasks"
+#data_mask_folder = "D:/MLOPS/Data/AllMasks"
+data_mask_folder = "C:/Users/mose_/Desktop/dataHenrik/AllInput - Copy"
 
 print(f"the folder path you entered is {data_mask_folder}")
 
