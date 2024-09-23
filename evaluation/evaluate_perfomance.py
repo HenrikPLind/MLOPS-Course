@@ -74,14 +74,21 @@ def evaluate_all_images(model, images, ground_truths, experiment_id, run_id, num
     """
     all_results = {}
 
+    class_0 = []
+    class_1 = []
+    class_2 = []
+
     for idx, (image, ground_truth) in enumerate(zip(images, ground_truths)):
         # Evaluate segmentation for each image
         results = evaluate_segmentation(model, image, ground_truth, experiment_id, run_id, num_classes)
 
+        class_0.append(results["dice"]["class_0"])
+        class_1.append(results["dice"]["class_1"])
+        class_2.append(results["dice"]["class_2"])
         # Store the results with image index
-        all_results[f"image_{idx}"] = results
+        #all_results[f"image_{idx}"] = results
 
-    return all_results
+    return class_0, class_1, class_2
 
 
 # Example usage:

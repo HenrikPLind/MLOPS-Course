@@ -1,16 +1,8 @@
-from torch import candidate
-
-from data_quality.GE_example import check_expectations
-from data_quality.create_csv_from_images import process_images_and_save_as_csv
-from data_version_controle.dvc_method import add_data_to_dvc
-from deployment.deploy_model import deploy_with_mlflow
-from evaluation.check_expectations_model_deployment import model_deployment_check
-from evaluation.evaluate_perfomance import evaluate_segmentation, evaluate_all_images
-from models.models import multi_unet_model
-from preprocessing.preprocessing_pipeline import preprocessing
-from src.Helpers.patch_loader import load_patches
-from train import train_and_log_model
 import mlflow.keras
+import numpy as np
+from tensorflow.python.keras.utils.np_utils import to_categorical
+from evaluation.evaluate_perfomance import evaluate_all_images
+from src.Helpers.patch_loader import load_patches
 
 #hyperparameters
 n_classes = 3
@@ -23,7 +15,7 @@ print(f"The folder path you entered is {data_input_folder}")
 
 #data_mask_folder = input("Please enter the folder where the labels are stored: ")
 #data_mask_folder = "D:/MLOPS/Data/AllMasks"
-data_mask_folder = "C:/Users/mose_/Desktop/dataHenrik/AllMasks - Copy"
+data_mask_folder = "C:/Users/mose_/Desktop/dataHenrik/AllInput - Copy"
 
 print(f"the folder path you entered is {data_mask_folder}")
 
@@ -57,7 +49,7 @@ if should_train:
     # Preprocess images
     training_patches, training_label_patches, \
     validation_patches, validation_label_patches, \
-    test_input_patches, test_mask_patches = \
+    test_patches, test_label_patches = \
     preprocessing(input_images=input_images, label_images=label_images,
                   folder_training=folder_path_training, folder_training_label=folder_path_training_label,
                   folder_validation=folder_path_validation, folder_validation_label=folder_path_validation_label,
@@ -68,42 +60,29 @@ if should_train:
     print('Versioning data (coarse)')
     add_data_to_dvc(folder_path_data)
 
+experiment_id = "568984660945487376"
+run_id = "30cf9d6599a4418886b27ca507a884b8"
 
-    # Perform training with MLFlow
-    #run_id, experiment_id = train_and_log_model(model=multi_unet_model(), dataset=[training_patches, training_label_patches],
-                            #dataset_val=[validation_patches, validation_label_patches],
-                            #label_mask_path_train=folder_path_training_label,
-                            #label_mask_path_val=folder_path_validation_label,
-                            #model_name='multi_unet', n_epochs=1, n_batch=8)
+# load model
+model_uri = f"../src/mlartifacts/{experiment_id}/{run_id}/artifacts/mlartifacts/model"
+print(f'Fetching model from: {model_uri}')
+model = mlflow.tensorflow.load_model(model_uri)
 
-##################################################################################################################
-        #NEW MODEL
-    experiment_id_new = "568984660945487376"
-    run_id_new = "30cf9d6599a4418886b27ca507a884b8"
+test_patches = load_patches(
+    "C:/Users/mose_/AAU/Sundhedstek/PhD/Courses/Data and Machine Learning Operations/Code_mlops_Course/MLOPS-Course/data/test/input/")
+test_label_patches = load_patches(
+    "C:/Users/mose_/AAU/Sundhedstek/PhD/Courses/Data and Machine Learning Operations/Code_mlops_Course/MLOPS-Course/data/test/output/")
 
-    # load model_old
-    new_model_uri = f"../src/mlartifacts/{experiment_id_new}/{run_id_new}/artifacts/mlartifacts/model"
-    print(f'Fetching model from: {new_model_uri}')
-    new_model = mlflow.tensorflow.load_model(new_model_uri)
-
-##################################################################################################################
-        #OLD MODEL
-    experiment_id_old = "568984660945487376"
-    run_id_old = "30cf9d6599a4418886b27ca507a884b8"
-
-    # load model_old
-    old_model_uri = f"../src/mlartifacts/{experiment_id_old}/{run_id_old}/artifacts/mlartifacts/model"
-    print(f'Fetching model from: {old_model_uri}')
-    old_model = mlflow.tensorflow.load_model(old_model_uri)
-
-##################################################################################################################
+label_images = np.array(test_label_patches)
+label_images = np.expand_dims(label_images, axis=3)
+label_images = to_categorical(label_images, num_classes=3)
+label_images = label_images.reshape((label_images.shape[0], label_images.shape[1], label_images.shape[2], 3))
+label_images = label_images.astype(np.uint8)
+label_images = list(label_images)
 
 
-    print()
-# Perform Great Expectations on csv file
-performance_check = model_deployment_check(old_model, experiment_id_old, run_id_old, new_model, experiment_id_new, run_id_new, test_input_patches, test_mask_patches, csv_filename="performance_deployment.csv")
+# Evaluate model performance
+result = evaluate_all_images(model, images=test_patches, ground_truths=test_label_patches,
+                             experiment_id=experiment_id, run_id=run_id)
 
-# Deploy model
-deploy_with_mlflow()
-
-print()
+bob = 0
