@@ -1,7 +1,7 @@
 from data_quality.GE_example import check_expectations
 from data_quality.create_csv_from_images import process_images_and_save_as_csv
 from data_version_controle.dvc_method import add_data_to_dvc
-from deployment.deploy_model import deploy_with_mlflow
+from deployment.deploy_model import predict_on_deployed_model, serve_mlflow_model
 from evaluation.evaluate_perfomance import evaluate_segmentation, evaluate_all_images
 from models.models import multi_unet_model
 from preprocessing.preprocessing_pipeline import preprocessing
@@ -70,20 +70,22 @@ if should_train:
                             label_mask_path_val=folder_path_validation_label,
                             model_name='multi_unet', n_epochs=1, n_batch=8)
 
-    # load model
-    model_uri = f"../src/mlartifacts/{experiment_id}/{run_id}/artifacts/mlartifacts/model"
-    print(f'Fetching model from: {model_uri}')
-    model = mlflow.tensorflow.load_model(model_uri)
+# load model
+model_uri = f"../src/mlartifacts/{experiment_id}/{run_id}/artifacts/mlartifacts/model"
+print(f'Fetching model from: {model_uri}')
+model = mlflow.tensorflow.load_model(model_uri)
 
-    # Evaluate model performance
-    result = evaluate_all_images(model, images=test_patches, ground_truths=test_label_patches,
-                                   experiment_id=experiment_id, run_id=run_id)
+# Evaluate model performance
+result = evaluate_all_images(model, images=test_patches, ground_truths=test_label_patches,
+                             experiment_id=experiment_id, run_id=run_id)
 
-    print()
+# serve model
+process = serve_mlflow_model(model_uri=model_uri, port=5001)
+
+# example use of deployed model: it is available on http://127.0.0.1:port/invocations
+response = predict_on_deployed_model(image_path='', port=5001, host='127.0.0.1')
 
 
-    # Deploy model
-    deploy_with_mlflow()
 
 
 
