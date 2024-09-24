@@ -38,12 +38,12 @@ def serve_model(model_uri, port=5001):
 
 def predict_on_deployed_model(image_path, port=5001, host="127.0.0.1"):
     """
-    Sends an image to the MLflow model server for prediction and visualizes the segmentation result.
+    Sends an image to the MLflow model server for prediction.
 
     :param image_path: The path to the image file.
     :param port: The port on which the MLflow model is being served.
     :param host: The host where the MLflow model is being served. Default is localhost (127.0.0.1).
-    :return: The prediction result from the model server.
+    :return: The JSON response from the model server, assumed to contain the segmentation result.
     """
     try:
         # Construct the model server URL dynamically
@@ -51,9 +51,8 @@ def predict_on_deployed_model(image_path, port=5001, host="127.0.0.1"):
 
         # Load and preprocess the image
         image = Image.open(image_path)
-        original_image = image.copy()  # Save a copy of the original for visualization
         buffered = io.BytesIO()
-        image.save(buffered, format="PNG")
+        image.save(buffered, format="JPEG")
         img_bytes = buffered.getvalue()
 
         # Encode the image as base64
@@ -72,52 +71,36 @@ def predict_on_deployed_model(image_path, port=5001, host="127.0.0.1"):
         # Check if the request was successful
         response.raise_for_status()
 
-        # Parse the response (assuming the segmentation is returned as a base64-encoded image)
-        response_json = response.json()
-        segmentation_mask_base64 = response_json.get('figure_out_the_key_to_image')
-
-        if segmentation_mask_base64:
-            # Decode the segmentation mask from base64
-            segmentation_mask_bytes = base64.b64decode(segmentation_mask_base64)
-            segmentation_image = Image.open(io.BytesIO(segmentation_mask_bytes))
-
-            # Visualize the segmentation result
-            visualize_segmentation(original_image, segmentation_image)
-        else:
-            print("No segmentation mask found in the response.")
-
-        return response_json
+        # Return the full response as JSON
+        return response.json()
 
     except Exception as e:
-        print(f"Error occurred: {e}")
+        print(f"Error occurred during prediction: {e}")
         return None
 
 
-
-def visualize_segmentation(original_image, segmentation_image):
+def visualize_volume(segmentation_volume):
     """
-    Visualizes the original image with the segmentation mask overlay.
+    Visualizes a 3D volume or 2D segmentation returned from the model.
 
-    :param original_image: The original input image.
-    :param segmentation_image: The predicted segmentation mask.
+    :param segmentation_volume: The volume data (as a numpy array or similar) to visualize.
     """
-    # Convert images to numpy arrays
-    original_array = np.array(original_image)
-    segmentation_array = np.array(segmentation_image)
+    if isinstance(segmentation_volume, list):
+        segmentation_volume = np.array(segmentation_volume)  # Convert to numpy array if it's a list
 
-    # Ensure segmentation mask is binary or in a compatible format
-    if segmentation_array.ndim == 2:  # Single channel mask
-        plt.imshow(original_array)
-        plt.imshow(segmentation_array, alpha=0.5, cmap='jet')  # Overlay segmentation with transparency
-        plt.title("Segmentation Overlay")
+    # Check if it's 2D or 3D data
+    if segmentation_volume.ndim == 2:
+        # 2D Image
+        plt.imshow(segmentation_volume, cmap='jet', alpha=0.5)
+        plt.title("Segmentation Mask")
+        plt.show()
+    elif segmentation_volume.ndim == 3:
+        # 3D Volume: Visualize each slice
+        fig, axes = plt.subplots(1, segmentation_volume.shape[0], figsize=(15, 5))
+        fig.suptitle("Segmentation Volume Slices")
+        for i, ax in enumerate(axes):
+            ax.imshow(segmentation_volume[i], cmap='jet', alpha=0.5)
+            ax.set_title(f'Slice {i + 1}')
+        plt.show()
     else:
-        # If segmentation image is multi-channel (RGB), we can directly overlay it
-        plt.subplot(1, 2, 1)
-        plt.imshow(original_image)
-        plt.title("Original Image")
-
-        plt.subplot(1, 2, 2)
-        plt.imshow(segmentation_image)
-        plt.title("Segmentation Result")
-
-    plt.show()
+        print("Unsupported volume shape for visualization.")

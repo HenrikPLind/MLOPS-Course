@@ -1,7 +1,7 @@
 from data_quality.GE_example import check_expectations
 from data_quality.create_csv_from_images import process_images_and_save_as_csv
 from data_version_controle.dvc_method import add_data_to_dvc
-from deployment.deploy_model import predict_on_deployed_model, serve_model
+from deployment.deploy_model import predict_on_deployed_model, serve_model, visualize_volume
 from evaluation.evaluate_perfomance import evaluate_segmentation, evaluate_all_images
 from models.models import multi_unet_model
 from preprocessing.preprocessing_pipeline import preprocessing
@@ -83,11 +83,12 @@ result = evaluate_all_images(model, images=test_patches, ground_truths=test_labe
 process = serve_model(model_uri=model_uri, port=5001)
 
 # example use of deployed model: it is available on http://127.0.0.1:port/invocations
-response = predict_on_deployed_model(image_path='', port=5001, host='127.0.0.1')
+response_json = predict_on_deployed_model(image_path='', port=5001, host='127.0.0.1')
 
 # plot prediction
+if response_json and 'segmentation_volume' in response_json:
+    segmentation_volume = response_json['figure_out_this_key']
+    visualize_volume(segmentation_volume)
+else:
+    print("Segmentation volume not found in the response.")
 
-
-
-
-print()
