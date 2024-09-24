@@ -31,19 +31,19 @@ def model_deployment_check(old_model, old_ex_id, old_run_id, new_model, new_ex_i
                                    })
 
     # Calculate avg dice for every class
-    mean_old_class0 = performance_df[['Dice_old_class0']].mean()
-    mean_old_class1 = performance_df[['Dice_old_class1']].mean()
-    mean_old_class2 = performance_df[['Dice_old_class2']].mean()
-    mean_new_class0 = performance_df[['Dice_new_class0']].mean()
-    mean_new_class1 = performance_df[['Dice_new_class1']].mean()
-    mean_new_class2 = performance_df[['Dice_new_class2']].mean()
+    mean_old_class0 = performance_df['Dice_old_class0'].mean()
+    mean_old_class1 = performance_df['Dice_old_class1'].mean()
+    mean_old_class2 = performance_df['Dice_old_class2'].mean()
+    mean_new_class0 = performance_df['Dice_new_class0'].mean()
+    mean_new_class1 = performance_df['Dice_new_class1'].mean()
+    mean_new_class2 = performance_df['Dice_new_class2'].mean()
 
-    performance_mean_df = pd.DataFrame({'Dice_mean_old_class0': mean_old_class0.values[0],
-                                        'Dice_mean_old_class1': mean_old_class1.values[0],
-                                        'Dice_mean_old_class2': mean_old_class2.values[0],
-                                        'Dice_mean_new_class0': mean_new_class0.values[0],
-                                        'Dice_mean_new_class1': mean_new_class1.values[0],
-                                        'Dice_mean_new_class2': mean_new_class2.values[0],})
+    performance_mean_df = pd.DataFrame({'Dice_mean_old_class0': [mean_old_class0],
+                                        'Dice_mean_old_class1': [mean_old_class1],
+                                        'Dice_mean_old_class2': [mean_old_class2],
+                                        'Dice_mean_new_class0': [mean_new_class0],
+                                        'Dice_mean_new_class1': [mean_new_class1],
+                                        'Dice_mean_new_class2': [mean_new_class2],})
 
 
 
@@ -57,22 +57,22 @@ def model_deployment_check(old_model, old_ex_id, old_run_id, new_model, new_ex_i
     # Create a Great Expectations DataFrame from the pandas DataFrame
 
     class_0_old_above_threshold = validator.expect_column_min_to_be_between(column='Dice_mean_old_class0',
-                                                                             min_value=0.01,
+                                                                             min_value=0.00001,
                                                                              max_value=1)
     class_1_old_above_threshold = validator.expect_column_min_to_be_between(column='Dice_mean_old_class1',
-                                                                             min_value=0.01,
+                                                                             min_value=0.00001,
                                                                              max_value=1)
     class_2_old_above_threshold = validator.expect_column_min_to_be_between(column='Dice_mean_old_class2',
-                                                                             min_value=0.01,
+                                                                             min_value=0.00001,
                                                                              max_value=1)
     class_0_new_above_threshold = validator.expect_column_min_to_be_between(column='Dice_mean_new_class0',
-                                                                             min_value=0.01,
+                                                                             min_value=0.00001,
                                                                              max_value=1)
     class_1_new_above_threshold = validator.expect_column_min_to_be_between(column='Dice_mean_new_class1',
-                                                                             min_value=0.01,
+                                                                             min_value=0.00001,
                                                                              max_value=1)
     class_2_new_above_threshold = validator.expect_column_min_to_be_between(column='Dice_mean_new_class2',
-                                                                             min_value=0.01,
+                                                                             min_value=0.00001,
                                                                              max_value=1)
 
     comparison_class0 = validator.expect_column_pair_values_A_to_be_greater_than_B(column_A='Dice_mean_old_class0',

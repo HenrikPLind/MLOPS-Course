@@ -17,7 +17,7 @@ def serve_model(model_uri, port=5001):
     :param port: The port number to serve the model on. Default is 5001.
     """
     try:
-        # Construct the command to serve the model: mlflow models serve -m models:/my_model/1 --port 5000
+        # Construct the command to serve the model: mlflow models serve -m models:/my_model/1 --port 5001
         command = [
             "mlflow", "models", "serve",
             "-m", model_uri,
@@ -49,17 +49,10 @@ def predict_on_deployed_model(image_path, port=5001, host="127.0.0.1"):
         # Construct the model server URL dynamically
         model_url = f"http://{host}:{port}/invocations"
 
-        # Load and preprocess the image
         image = Image.open(image_path)
-        buffered = io.BytesIO()
-        image.save(buffered, format="JPEG")
-        img_bytes = buffered.getvalue()
+        image_array = np.array(image).tolist()  # Convert to list for JSON serialization
+        data = json.dumps({"inputs": [image_array]})
 
-        # Encode the image as base64
-        encoded_image = base64.b64encode(img_bytes).decode('utf-8')
-
-        # Prepare the JSON payload
-        data = json.dumps({"image": encoded_image})
 
         # Send the request to the MLflow model server
         response = requests.post(

@@ -3,6 +3,7 @@ from data_quality.create_csv_from_images import process_images_and_save_as_csv
 from data_version_controle.dvc_method import add_data_to_dvc
 from deployment.deploy_model import predict_on_deployed_model, serve_model, visualize_volume
 from evaluation.evaluate_perfomance import evaluate_segmentation, evaluate_all_images
+from evaluation.check_expectations_model_deployment import model_deployment_check
 from models.models import multi_unet_model
 from preprocessing.preprocessing_pipeline import preprocessing
 from train import train_and_log_model
@@ -64,26 +65,55 @@ if should_train:
 
 
     # Perform training with MLFlow
-    run_id, experiment_id = train_and_log_model(model=multi_unet_model(), dataset=[training_patches, training_label_patches],
-                            dataset_val=[validation_patches, validation_label_patches],
-                            label_mask_path_train=folder_path_training_label,
-                            label_mask_path_val=folder_path_validation_label,
-                            model_name='multi_unet', n_epochs=1, n_batch=8)
+    #run_id, experiment_id = train_and_log_model(model=multi_unet_model(), dataset=[training_patches, training_label_patches],
+    #                        dataset_val=[validation_patches, validation_label_patches],
+    #                        label_mask_path_train=folder_path_training_label,
+    #                        label_mask_path_val=folder_path_validation_label,
+    #                        model_name='multi_unet', n_epochs=1, n_batch=8)
+
+
+
+ ##################################################################################################################
+# NEW MODEL
+experiment_id_new = "738313580510973847"
+run_id_new = "f73227e7e38249e2a0d1f5be043c176d"
+
+# load model_old
+new_model_uri = f"../src/mlartifacts/{experiment_id_new}/{run_id_new}/artifacts/mlartifacts/model"
+print(f'Fetching model from: {new_model_uri}')
+new_model = mlflow.tensorflow.load_model(new_model_uri)
+
+##################################################################################################################
+# OLD MODEL
+experiment_id_old = "738313580510973847"
+run_id_old = "f73227e7e38249e2a0d1f5be043c176d"
+
+# load model_old
+old_model_uri = f"../src/mlartifacts/{experiment_id_old}/{run_id_old}/artifacts/mlartifacts/model"
+print(f'Fetching model from: {old_model_uri}')
+old_model = mlflow.tensorflow.load_model(old_model_uri)
+
+
+should_deploy = model_deployment_check(old_model=old_model, old_ex_id=experiment_id_old,
+                                       old_run_id=run_id_old, new_model=new_model,
+                                       new_ex_id=experiment_id_new, new_run_id=run_id_new,
+                                       test_input_patches=test_patches, test_mask_patches=test_label_patches,
+                                       csv_filename='deployment_check.csv', output_file='expectations_deployment.txt')
 
 # load model
-model_uri = f"../src/mlartifacts/{experiment_id}/{run_id}/artifacts/mlartifacts/model"
+model_uri = f"../src/mlartifacts/{experiment_id_new}/{run_id_new}/artifacts/mlartifacts/model"
 print(f'Fetching model from: {model_uri}')
 model = mlflow.tensorflow.load_model(model_uri)
 
 # Evaluate model performance
-result = evaluate_all_images(model, images=test_patches, ground_truths=test_label_patches,
-                             experiment_id=experiment_id, run_id=run_id)
+#result = evaluate_all_images(model, images=test_patches, ground_truths=test_label_patches,
+                             ##experiment_id=experiment_id_new, run_id=run_id_new)
 
 # serve model
 process = serve_model(model_uri=model_uri, port=5001)
 
 # example use of deployed model: it is available on http://127.0.0.1:port/invocations
-response_json = predict_on_deployed_model(image_path='', port=5001, host='127.0.0.1')
+response_json = predict_on_deployed_model(image_path='../data/test/input/image1split1.png', port=5001, host='127.0.0.1')
 
 # plot prediction
 if response_json and 'segmentation_volume' in response_json:
