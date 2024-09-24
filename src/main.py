@@ -1,12 +1,10 @@
 from data_quality.GE_example import check_expectations
 from data_quality.create_csv_from_images import process_images_and_save_as_csv
 from data_version_controle.dvc_method import add_data_to_dvc
-from deployment.deploy_model import deploy_with_mlflow
-from evaluation.check_expectations_model_deployment import model_deployment_check
+from deployment.deploy_model import predict_on_deployed_model, serve_model, visualize_volume
 from evaluation.evaluate_perfomance import evaluate_segmentation, evaluate_all_images
 from models.models import multi_unet_model
 from preprocessing.preprocessing_pipeline import preprocessing
-from src.Helpers.patch_loader import load_patches
 from train import train_and_log_model
 import mlflow.keras
 
@@ -14,14 +12,12 @@ import mlflow.keras
 n_classes = 3
 
 #data_input_folder = input('Please enter the folder where the input data is stored: ')
-#data_input_folder = "D:/MLOPS/Data/AllInput"
-data_input_folder = "C:/Users/mose_/Desktop/dataHenrik/AllInput - Copy"
+data_input_folder = "D:/MLOPS/Data/AllInput"
 
 print(f"The folder path you entered is {data_input_folder}")
 
 #data_mask_folder = input("Please enter the folder where the labels are stored: ")
-#data_mask_folder = "D:/MLOPS/Data/AllMasks"
-data_mask_folder = "C:/Users/mose_/Desktop/dataHenrik/AllMasks - Copy"
+data_mask_folder = "D:/MLOPS/Data/AllMasks"
 
 print(f"the folder path you entered is {data_mask_folder}")
 
@@ -55,7 +51,7 @@ if should_train:
     # Preprocess images
     training_patches, training_label_patches, \
     validation_patches, validation_label_patches, \
-    test_input_patches, test_mask_patches = \
+    test_patches, test_label_patches = \
     preprocessing(input_images=input_images, label_images=label_images,
                   folder_training=folder_path_training, folder_training_label=folder_path_training_label,
                   folder_validation=folder_path_validation, folder_validation_label=folder_path_validation_label,
@@ -68,44 +64,31 @@ if should_train:
 
 
     # Perform training with MLFlow
-    #run_id, experiment_id = train_and_log_model(model=multi_unet_model(), dataset=[training_patches, training_label_patches],
-                            #dataset_val=[validation_patches, validation_label_patches],
-                            #label_mask_path_train=folder_path_training_label,
-                            #label_mask_path_val=folder_path_validation_label,
-                            #model_name='multi_unet', n_epochs=1, n_batch=8)
+    run_id, experiment_id = train_and_log_model(model=multi_unet_model(), dataset=[training_patches, training_label_patches],
+                            dataset_val=[validation_patches, validation_label_patches],
+                            label_mask_path_train=folder_path_training_label,
+                            label_mask_path_val=folder_path_validation_label,
+                            model_name='multi_unet', n_epochs=1, n_batch=8)
 
-##################################################################################################################
-        #NEW MODEL
-    experiment_id_new = "187321980032475183"
-    run_id_new = "fd22c4cf50844db5a3e41b0f83c9dcf4"
+# load model
+model_uri = f"../src/mlartifacts/{experiment_id}/{run_id}/artifacts/mlartifacts/model"
+print(f'Fetching model from: {model_uri}')
+model = mlflow.tensorflow.load_model(model_uri)
 
-    # load model_old
-    new_model_uri = f"../src/mlartifacts/{experiment_id_new}/{run_id_new}/artifacts/mlartifacts/model"
-    print(f'Fetching model from: {new_model_uri}')
-    new_model = mlflow.tensorflow.load_model(new_model_uri)
+# Evaluate model performance
+result = evaluate_all_images(model, images=test_patches, ground_truths=test_label_patches,
+                             experiment_id=experiment_id, run_id=run_id)
 
-##################################################################################################################
-        #OLD MODEL
-    experiment_id_old = "187321980032475183"
-    run_id_old = "fd22c4cf50844db5a3e41b0f83c9dcf4"
+# serve model
+process = serve_model(model_uri=model_uri, port=5001)
 
-    # load model_old
-    old_model_uri = f"../src/mlartifacts/{experiment_id_old}/{run_id_old}/artifacts/mlartifacts/model"
-    print(f'Fetching model from: {old_model_uri}')
-    old_model = mlflow.tensorflow.load_model(old_model_uri)
+# example use of deployed model: it is available on http://127.0.0.1:port/invocations
+response_json = predict_on_deployed_model(image_path='', port=5001, host='127.0.0.1')
 
-##################################################################################################################
+# plot prediction
+if response_json and 'segmentation_volume' in response_json:
+    segmentation_volume = response_json['figure_out_this_key']
+    visualize_volume(segmentation_volume)
+else:
+    print("Segmentation volume not found in the response.")
 
-
-    print()
-# Perform Great Expectations on csv file
-should_deploy = model_deployment_check(old_model, experiment_id_old, run_id_old,
-                                           new_model, experiment_id_new, run_id_new,
-                                           test_input_patches, test_mask_patches,
-                                           csv_filename="performance_deployment.csv",
-                                           output_file="expectation_trigger_deployment_data.txt" )
-
-# Deploy model
-deploy_with_mlflow()
-
-print()
