@@ -38,12 +38,12 @@ def model_deployment_check(old_model, old_ex_id, old_run_id, new_model, new_ex_i
     mean_new_class1 = performance_df[['Dice_new_class1']].mean()
     mean_new_class2 = performance_df[['Dice_new_class2']].mean()
 
-    performance_mean_df = pd.DataFrame({'Dice_mean_old_class0': mean_old_class0,
-                                        'Dice_mean_old_class1': mean_old_class1,
-                                        'Dice_mean_old_class2': mean_old_class2,
-                                        'Dice_mean_new_class0': mean_new_class0,
-                                        'Dice_mean_new_class1': mean_new_class1,
-                                        'Dice_mean_new_class2': mean_new_class2,})
+    performance_mean_df = pd.DataFrame({'Dice_mean_old_class0': mean_old_class0.values[0],
+                                        'Dice_mean_old_class1': mean_old_class1.values[0],
+                                        'Dice_mean_old_class2': mean_old_class2.values[0],
+                                        'Dice_mean_new_class0': mean_new_class0.values[0],
+                                        'Dice_mean_new_class1': mean_new_class1.values[0],
+                                        'Dice_mean_new_class2': mean_new_class2.values[0],})
 
 
 
