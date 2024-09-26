@@ -3,6 +3,10 @@ Prerequisites:
 For running on GPU: 
 11.2 cuda toolkit, cudnn 8.1.0, tensorflow-gpu 2.10.0 
 
+MLflow:
+Modeltraining runs on port:5000
+Modelserving runs on port:5002
+
 Run the main.py
   1. Loads raw data from "raw_data/input", "raw_data/output"
   2. Uses great_expectations to check data quality
