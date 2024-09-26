@@ -1,24 +1,27 @@
+import mlflow.keras
+import numpy as np
+
 from data_quality.GE_example import check_expectations
-from data_quality.create_csv_from_images import process_images_and_save_as_csv
+from data_quality.create_csv_from_images import process_images_and_save_as_csv, load_images_from_folder
 from data_version_controle.dvc_method import add_data_to_dvc
-from deployment.deploy_model import predict_on_deployed_model, serve_model, visualize_volume
-from evaluation.evaluate_perfomance import evaluate_segmentation, evaluate_all_images
+from deployment.deploy_model import predict_on_deployed_model, serve_model
 from evaluation.check_expectations_model_deployment import model_deployment_check
 from models.models import multi_unet_model
+from postprocessing.visualize_predictions import visualize_segmentation_map, overlay_segmentation, \
+    compare_segmentation_results
 from preprocessing.preprocessing_pipeline import preprocessing
-from train import train_and_log_model
-import mlflow.keras
+from src.train import train_and_log_model
 
-#hyperparameters
+# hyperparameters
 n_classes = 3
 
 #data_input_folder = input('Please enter the folder where the input data is stored: ')
-data_input_folder = "D:/MLOPS/Data/AllInput"
+data_input_folder = "../raw_data/AllInput"
 
 print(f"The folder path you entered is {data_input_folder}")
 
 #data_mask_folder = input("Please enter the folder where the labels are stored: ")
-data_mask_folder = "D:/MLOPS/Data/AllMasks"
+data_mask_folder = "../raw_data/AllMasks"
 
 print(f"the folder path you entered is {data_mask_folder}")
 
@@ -63,28 +66,24 @@ if should_train:
     print('Versioning data (coarse)')
     add_data_to_dvc(folder_path_data)
 
-
     # Perform training with MLFlow
-    #run_id, experiment_id = train_and_log_model(model=multi_unet_model(), dataset=[training_patches, training_label_patches],
-    #                        dataset_val=[validation_patches, validation_label_patches],
-    #                        label_mask_path_train=folder_path_training_label,
-    #                        label_mask_path_val=folder_path_validation_label,
-    #                        model_name='multi_unet', n_epochs=1, n_batch=8)
+
+    run_id, experiment_id = train_and_log_model(model=multi_unet_model(),
+                                                dataset=[training_patches, training_label_patches],
+                                                dataset_val=[validation_patches, validation_label_patches],
+                                                n_epochs=1, n_batch=8)
 
 
-
- ##################################################################################################################
-# NEW MODEL
-experiment_id_new = "738313580510973847"
-run_id_new = "f73227e7e38249e2a0d1f5be043c176d"
+'###################### NEW MODEL ########################'
+experiment_id_new = '961708379921728396'
+run_id_new = 'b3eac0d22bae4d9d80b7a9411bbc07d8'
 
 # load model_old
 new_model_uri = f"../src/mlartifacts/{experiment_id_new}/{run_id_new}/artifacts/mlartifacts/model"
 print(f'Fetching model from: {new_model_uri}')
 new_model = mlflow.tensorflow.load_model(new_model_uri)
 
-##################################################################################################################
-# OLD MODEL
+'###################### OLD MODEL ########################'
 experiment_id_old = "738313580510973847"
 run_id_old = "f73227e7e38249e2a0d1f5be043c176d"
 
@@ -93,11 +92,13 @@ old_model_uri = f"../src/mlartifacts/{experiment_id_old}/{run_id_old}/artifacts/
 print(f'Fetching model from: {old_model_uri}')
 old_model = mlflow.tensorflow.load_model(old_model_uri)
 
+test_patches = load_images_from_folder(image_dir='../data/test/input')
+test_label_patches = load_images_from_folder(image_dir='../data/test/output')
 
 should_deploy = model_deployment_check(old_model=old_model, old_ex_id=experiment_id_old,
                                        old_run_id=run_id_old, new_model=new_model,
                                        new_ex_id=experiment_id_new, new_run_id=run_id_new,
-                                       test_input_patches=test_patches, test_mask_patches=test_label_patches,
+                                       test_input_patches=test_patches[0:10], test_mask_patches=test_label_patches[0:10],
                                        csv_filename='deployment_check.csv', output_file='expectations_deployment.txt')
 
 # load model
@@ -105,20 +106,43 @@ model_uri = f"../src/mlartifacts/{experiment_id_new}/{run_id_new}/artifacts/mlar
 print(f'Fetching model from: {model_uri}')
 model = mlflow.tensorflow.load_model(model_uri)
 
-# Evaluate model performance
-#result = evaluate_all_images(model, images=test_patches, ground_truths=test_label_patches,
-                             ##experiment_id=experiment_id_new, run_id=run_id_new)
-
 # serve model
-process = serve_model(model_uri=model_uri, port=5001)
+process = serve_model(model_uri=model_uri, port=5002)
 
 # example use of deployed model: it is available on http://127.0.0.1:port/invocations
-response_json = predict_on_deployed_model(image_path='../data/test/input/image1split1.png', port=5001, host='127.0.0.1')
+response = predict_on_deployed_model(image_path='../data/test/input/image1split10.png', port=5002, host='127.0.0.1')
 
-# plot prediction
-if response_json and 'segmentation_volume' in response_json:
-    segmentation_volume = response_json['figure_out_this_key']
-    visualize_volume(segmentation_volume)
+# Define your class colors
+class_colors = {
+    0: (0, 0, 0),        # Class 0 - Black
+    1: (255, 0, 0),      # Class 1 - Blue
+    2: (0, 255, 0),      # Class 2 - Green
+}
+
+if response:
+    # Extract and process the prediction
+    predictions = response.get('predictions', None)
+    if predictions is None:
+        print("No predictions found in the response.")
+    else:
+        prediction_array = np.array(predictions[0])
+        segmentation_map = np.argmax(prediction_array, axis=-1)
+        # Visualize and save the segmentation map
+        visualize_segmentation_map(class_colors, segmentation_map, save_path='segmentation_map.png')
+
+        # Overlay the segmentation on the original image and save
+        overlay_segmentation(
+            original_image_path='../data/test/input/image1split10.png',
+            segmentation_map=segmentation_map,
+            class_colors=class_colors,
+            alpha=0.5,
+            save_path='overlayed_image.png'
+        )
+        compare_segmentation_results(original_image_path='../data/test/input/image1split10.png',
+                                     ground_truth_path='../data/test/input/image1split10.png',
+                                     segmentation_map=segmentation_map,
+                                     class_colors=class_colors,
+                                     save_path='comparison.png')
 else:
-    print("Segmentation volume not found in the response.")
+    print("Failed to get a valid response from the model server.")
 
