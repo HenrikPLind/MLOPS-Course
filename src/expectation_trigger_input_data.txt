@@ -1,0 +1,127 @@
+Blurriness Expectation Result:
+{
+  "success": true,
+  "expectation_config": {
+    "expectation_type": "expect_column_values_to_be_between",
+    "kwargs": {
+      "column": "blurriness",
+      "min_value": 0,
+      "max_value": 30,
+      "batch_id": "default_pandas_datasource-#ephemeral_pandas_asset"
+    },
+    "meta": {}
+  },
+  "result": {
+    "element_count": 6,
+    "unexpected_count": 0,
+    "unexpected_percent": 0.0,
+    "partial_unexpected_list": [],
+    "missing_count": 0,
+    "missing_percent": 0.0,
+    "unexpected_percent_total": 0.0,
+    "unexpected_percent_nonmissing": 0.0
+  },
+  "meta": {},
+  "exception_info": {
+    "raised_exception": false,
+    "exception_traceback": null,
+    "exception_message": null
+  }
+}
+
+Image Size Expectation Result:
+{
+  "success": false,
+  "expectation_config": {
+    "expectation_type": "expect_column_pair_values_to_be_in_set",
+    "kwargs": {
+      "column_A": "image_x_res",
+      "column_B": "image_y_res",
+      "value_pairs_set": [
+        [
+          2008,
+          3384
+        ]
+      ],
+      "batch_id": "default_pandas_datasource-#ephemeral_pandas_asset"
+    },
+    "meta": {}
+  },
+  "result": {
+    "element_count": 6,
+    "unexpected_count": 6,
+    "unexpected_percent": 100.0,
+    "partial_unexpected_list": [
+      [
+        2708,
+        3384
+      ],
+      [
+        2708,
+        3384
+      ],
+      [
+        2708,
+        3384
+      ],
+      [
+        2708,
+        3384
+      ],
+      [
+        2708,
+        3384
+      ],
+      [
+        2708,
+        3384
+      ]
+    ],
+    "missing_count": 0,
+    "missing_percent": 0.0,
+    "unexpected_percent_total": 100.0,
+    "unexpected_percent_nonmissing": 100.0
+  },
+  "meta": {},
+  "exception_info": {
+    "raised_exception": false,
+    "exception_traceback": null,
+    "exception_message": null
+  }
+}
+
+Image Channel Expectation Result:
+{
+  "success": true,
+  "expectation_config": {
+    "expectation_type": "expect_column_distinct_values_to_equal_set",
+    "kwargs": {
+      "column": "image_z_res",
+      "value_set": [
+        3
+      ],
+      "batch_id": "default_pandas_datasource-#ephemeral_pandas_asset"
+    },
+    "meta": {}
+  },
+  "result": {
+    "observed_value": [
+      3
+    ],
+    "details": {
+      "value_counts": [
+        {
+          "value": 3,
+          "count": 6
+        }
+      ]
+    }
+  },
+  "meta": {},
+  "exception_info": {
+    "raised_exception": false,
+    "exception_traceback": null,
+    "exception_message": null
+  }
+}
+
