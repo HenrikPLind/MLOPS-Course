@@ -2,7 +2,7 @@ import base64
 import io
 import json
 import subprocess
-
+import mlflow.keras
 import numpy as np
 import requests
 from PIL import Image

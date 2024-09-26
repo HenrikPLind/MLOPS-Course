@@ -72,5 +72,7 @@ def multi_unet_model(n_classes=3, IMG_HEIGHT=256, IMG_WIDTH=256, IMG_CHANNELS=3)
 
     model.compile(optimizer="Adam", loss='categorical_crossentropy', metrics=['accuracy'])
 
+    model.summary()
+
 
     return model

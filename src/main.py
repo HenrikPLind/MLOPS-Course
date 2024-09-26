@@ -13,12 +13,14 @@ import mlflow.keras
 n_classes = 3
 
 #data_input_folder = input('Please enter the folder where the input data is stored: ')
-data_input_folder = "D:/MLOPS/Data/AllInput"
+#data_input_folder = "D:/MLOPS/Data/AllInput"
+data_input_folder = "C:/Users/mose_/Desktop/dataHenrik/AllInput - Copy"
 
 print(f"The folder path you entered is {data_input_folder}")
 
 #data_mask_folder = input("Please enter the folder where the labels are stored: ")
-data_mask_folder = "D:/MLOPS/Data/AllMasks"
+#data_mask_folder = "D:/MLOPS/Data/AllMasks"
+data_mask_folder = "C:/Users/mose_/Desktop/dataHenrik/AllMasks - Copy"
 
 print(f"the folder path you entered is {data_mask_folder}")
 
@@ -65,18 +67,18 @@ if should_train:
 
 
     # Perform training with MLFlow
-    #run_id, experiment_id = train_and_log_model(model=multi_unet_model(), dataset=[training_patches, training_label_patches],
-    #                        dataset_val=[validation_patches, validation_label_patches],
-    #                        label_mask_path_train=folder_path_training_label,
-    #                        label_mask_path_val=folder_path_validation_label,
-    #                        model_name='multi_unet', n_epochs=1, n_batch=8)
+    run_id, experiment_id = train_and_log_model(model=multi_unet_model(), dataset=[training_patches, training_label_patches],
+                            dataset_val=[validation_patches, validation_label_patches],
+                            label_mask_path_train=folder_path_training_label,
+                            label_mask_path_val=folder_path_validation_label,
+                           model_name='multi_unet', n_epochs=1, n_batch=8)
 
 
 
  ##################################################################################################################
 # NEW MODEL
-experiment_id_new = "738313580510973847"
-run_id_new = "f73227e7e38249e2a0d1f5be043c176d"
+experiment_id_new = "568984660945487376"
+run_id_new = "0efff02d196b471c827d457720227a48"
 
 # load model_old
 new_model_uri = f"../src/mlartifacts/{experiment_id_new}/{run_id_new}/artifacts/mlartifacts/model"
@@ -85,13 +87,15 @@ new_model = mlflow.tensorflow.load_model(new_model_uri)
 
 ##################################################################################################################
 # OLD MODEL
-experiment_id_old = "738313580510973847"
-run_id_old = "f73227e7e38249e2a0d1f5be043c176d"
+experiment_id_old = "568984660945487376"
+run_id_old = "0efff02d196b471c827d457720227a48"
 
 # load model_old
 old_model_uri = f"../src/mlartifacts/{experiment_id_old}/{run_id_old}/artifacts/mlartifacts/model"
 print(f'Fetching model from: {old_model_uri}')
 old_model = mlflow.tensorflow.load_model(old_model_uri)
+
+old_model.summary()
 
 
 should_deploy = model_deployment_check(old_model=old_model, old_ex_id=experiment_id_old,
