@@ -62,7 +62,7 @@ experiment_id_new = '605296362228644906'
 run_id_new = 'cc4e1cb3e87443dd878f0c8cbb927843'
 
 # load model_old
-new_model_uri = f"../src/mlartifacts/{experiment_id_new}/{run_id_new}/artifacts/mlartifacts/model"
+new_model_uri = f"../src/{experiment_id_new}/{run_id_new}/artifacts/mlartifacts/model"
 print(f'Fetching model from: {new_model_uri}')
 new_model = mlflow.tensorflow.load_model(new_model_uri)
 
@@ -71,7 +71,7 @@ experiment_id_old = "605296362228644906"
 run_id_old = "cc4e1cb3e87443dd878f0c8cbb927843"
 
 # load model_old
-old_model_uri = f"../src/mlartifacts/{experiment_id_old}/{run_id_old}/artifacts/mlartifacts/model"
+old_model_uri = f"../src/{experiment_id_old}/{run_id_old}/artifacts/mlartifacts/model"
 print(f'Fetching model from: {old_model_uri}')
 old_model = mlflow.tensorflow.load_model(old_model_uri)
 
@@ -85,7 +85,7 @@ should_deploy = model_deployment_check(old_model=old_model, old_ex_id=experiment
                                        csv_filename='deployment_check.csv', output_file='expectations_deployment.txt')
 
 # load model
-model_uri = f"../src/mlartifacts/{experiment_id_new}/{run_id_new}/artifacts/mlartifacts/model"
+model_uri = f"../src/{experiment_id_new}/{run_id_new}/artifacts/mlartifacts/model"
 print(f'Fetching model from: {model_uri}')
 model = mlflow.tensorflow.load_model(model_uri)
 
