@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/961708379921728396/b3eac0d22bae4d9d80b7a9411bbc07d8/artifacts
+end_time: 1727332354692
+entry_point_name: ''
+experiment_id: '961708379921728396'
+lifecycle_stage: active
+run_id: b3eac0d22bae4d9d80b7a9411bbc07d8
+run_name: shivering-wren-971
+run_uuid: b3eac0d22bae4d9d80b7a9411bbc07d8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1727327713195
+status: 3
+tags: []
+user_id: Henrik

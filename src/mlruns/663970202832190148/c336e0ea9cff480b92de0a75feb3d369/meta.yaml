@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/663970202832190148/c336e0ea9cff480b92de0a75feb3d369/artifacts
+end_time: 1726835014622
+entry_point_name: ''
+experiment_id: '663970202832190148'
+lifecycle_stage: active
+run_id: c336e0ea9cff480b92de0a75feb3d369
+run_name: thoughtful-bug-767
+run_uuid: c336e0ea9cff480b92de0a75feb3d369
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1726833155160
+status: 3
+tags: []
+user_id: Henrik

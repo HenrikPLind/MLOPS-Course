@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1727335047759
+current_stage: None
+description: ''
+last_updated_timestamp: 1727335047759
+name: Unet
+run_id: 3e39b140c84f49538a8b0e12332bee95
+run_link: ''
+source: mlflow-artifacts:/761708707831167246/3e39b140c84f49538a8b0e12332bee95/artifacts/mlartifacts/model
+status: READY
+status_message: null
+storage_location: mlflow-artifacts:/761708707831167246/3e39b140c84f49538a8b0e12332bee95/artifacts/mlartifacts/model
+user_id: null
+version: 2

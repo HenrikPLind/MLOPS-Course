@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/738313580510973847/9d9ddba2dbbc43eeb2e09aa5984b3d25/artifacts
+end_time: 1726828927279
+entry_point_name: ''
+experiment_id: '738313580510973847'
+lifecycle_stage: active
+run_id: 9d9ddba2dbbc43eeb2e09aa5984b3d25
+run_name: glamorous-cub-144
+run_uuid: 9d9ddba2dbbc43eeb2e09aa5984b3d25
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1726828776026
+status: 3
+tags: []
+user_id: Henrik

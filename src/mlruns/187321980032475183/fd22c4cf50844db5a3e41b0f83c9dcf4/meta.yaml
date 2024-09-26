@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/187321980032475183/fd22c4cf50844db5a3e41b0f83c9dcf4/artifacts
+end_time: 1726739603867
+entry_point_name: ''
+experiment_id: '187321980032475183'
+lifecycle_stage: active
+run_id: fd22c4cf50844db5a3e41b0f83c9dcf4
+run_name: salty-hare-763
+run_uuid: fd22c4cf50844db5a3e41b0f83c9dcf4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1726739556210
+status: 3
+tags: []
+user_id: Henrik

@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/738313580510973847/cc47d484ff954689bf86f38b7e729c9c/artifacts
+end_time: 1726828263915
+entry_point_name: ''
+experiment_id: '738313580510973847'
+lifecycle_stage: active
+run_id: cc47d484ff954689bf86f38b7e729c9c
+run_name: dapper-auk-880
+run_uuid: cc47d484ff954689bf86f38b7e729c9c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1726828101136
+status: 3
+tags: []
+user_id: Henrik

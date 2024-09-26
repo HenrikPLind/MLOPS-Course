@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/562755606939764470/777b5548fd95460c8836f106d365ad0d/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '562755606939764470'
+lifecycle_stage: active
+run_id: 777b5548fd95460c8836f106d365ad0d
+run_name: big-hog-763
+run_uuid: 777b5548fd95460c8836f106d365ad0d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1726742619553
+status: 1
+tags: []
+user_id: Henrik

@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/502923992474068775/21d4d9bff02f4981926f0a50d929ee22/artifacts
+end_time: 1726739925770
+entry_point_name: ''
+experiment_id: '502923992474068775'
+lifecycle_stage: active
+run_id: 21d4d9bff02f4981926f0a50d929ee22
+run_name: respected-chimp-827
+run_uuid: 21d4d9bff02f4981926f0a50d929ee22
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1726739877949
+status: 3
+tags: []
+user_id: Henrik
