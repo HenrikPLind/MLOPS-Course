@@ -12,7 +12,7 @@ Run the main.py
   2. Uses great_expectations to check data quality
   3. Preprocesses the data in patches 256x256 (must patch the images to be able to fit data into VRAM)
   4. Versions patches to DVC 
-  5. Trains a Unet model (100.000.000+ params), with MLflow
+  5. Trains a Unet model (30.000.000+ params), with MLflow
   6. Checks which model is better (both are not good, however it is for exemplifying a check on the performance before deploying)
   7. Deploys the best model
   8. Predicts on the model in ddeployment
