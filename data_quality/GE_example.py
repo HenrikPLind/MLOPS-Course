@@ -13,7 +13,7 @@ def check_expectations(csv_file, output_file, alert_email=None):
                                                                     max_value=30)
     image_size_expectation = validator.expect_column_pair_values_to_be_in_set(column_A='image_x_res',
                                                                               column_B='image_y_res',
-                                                                              value_pairs_set=[(2008, #2708
+                                                                              value_pairs_set=[(2708, #2708
                                                                                                 3384)])
     image_channel_expectation = validator.expect_column_distinct_values_to_equal_set(column='image_z_res',
                                                                                      value_set=([3]))
