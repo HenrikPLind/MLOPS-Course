@@ -58,8 +58,8 @@ if should_train:
 
 
 '###################### NEW MODEL ########################'
-experiment_id_new = '961708379921728396'
-run_id_new = 'b3eac0d22bae4d9d80b7a9411bbc07d8'
+experiment_id_new = '605296362228644906'
+run_id_new = 'cc4e1cb3e87443dd878f0c8cbb927843'
 
 # load model_old
 new_model_uri = f"../src/mlartifacts/{experiment_id_new}/{run_id_new}/artifacts/mlartifacts/model"
@@ -67,8 +67,8 @@ print(f'Fetching model from: {new_model_uri}')
 new_model = mlflow.tensorflow.load_model(new_model_uri)
 
 '###################### OLD MODEL ########################'
-experiment_id_old = "738313580510973847"
-run_id_old = "f73227e7e38249e2a0d1f5be043c176d"
+experiment_id_old = "605296362228644906"
+run_id_old = "cc4e1cb3e87443dd878f0c8cbb927843"
 
 # load model_old
 old_model_uri = f"../src/mlartifacts/{experiment_id_old}/{run_id_old}/artifacts/mlartifacts/model"
