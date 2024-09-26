@@ -15,7 +15,7 @@ Download the model from GoogleDrive. The model can be donwlaoded from this link:
 
 download the folder into the src folder in the project. 
 
-*Run the main.py*
+*Overview of main.py*
   1. Loads raw data from "raw_data/input", "raw_data/output"
   2. Uses great_expectations to check data quality
   3. Preprocesses the data in patches 256x256 (must patch the images to be able to fit data into VRAM)
